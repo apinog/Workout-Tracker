@@ -288,7 +288,6 @@
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     color: var(--muted);
-    margin-bottom: 4px;
   }
 
   .ex-note {
@@ -400,6 +399,67 @@
     transform: none;
   }
 
+  .rowing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .rowing-field {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .rowing-field-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .rowing-field-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rowing-input {
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    padding: 8px 10px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .rowing-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .rowing-input.filled {
+    border-color: #333;
+    color: var(--accent);
+  }
+
+  .rowing-input:disabled { opacity: 0.6; }
+
+  .rowing-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+  }
+
   .rest-day {
     text-align: center;
     padding: 60px 24px;
@@ -499,6 +559,54 @@
     font-family: 'DM Mono', monospace;
     letter-spacing: 0.5px;
     line-height: 1.5;
+  }
+
+  .ex-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .fatigue-select {
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 3px 6px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .fatigue-select:focus { outline: none; border-color: var(--accent); }
+  .fatigue-select.has-value { border-color: #444; color: var(--text); }
+  .fatigue-select:disabled { opacity: 0.5; cursor: default; }
+
+  .dp-tag {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .dp-tag:hover { border-color: #555; color: var(--text); }
+
+  .dp-tag.active {
+    background: #1a2a0a;
+    border-color: var(--accent-dim);
+    color: var(--accent);
   }
 
   .ex-unit-toggle {
@@ -627,7 +735,7 @@ const PROGRAM = {
         label: 'BLOCK A', type: 'Athletic Opener — Superset',
         exercises: [
           { id: 'mon_a1', prefix: 'A', name: 'KB Cossack Squat + Rotation', sets: 3, reps: '8/side', note: 'Lateral mobility, rotational power. Zero spinal load. Tennis carry-over.' },
-          { id: 'mon_a2', prefix: 'B', name: 'Face Pull', sets: 3, reps: '15', note: 'Shoulder health, rear delt activation. Light opener.' },
+          { id: 'mon_a2', prefix: 'B', name: 'Band Pull-Apart', sets: 3, reps: '15', note: 'Rear delt and scapular activation. Light opener, no back load.' },
         ]
       },
       {
@@ -648,7 +756,7 @@ const PROGRAM = {
         label: 'BLOCK D', type: 'Superset: Shoulder + Isolation',
         exercises: [
           { id: 'mon_d1', prefix: 'A', name: 'KB Shoulder Press', sets: 3, reps: '10–12', note: 'Light. Higher reps.' },
-          { id: 'mon_d2', prefix: 'B', name: 'Leg Extension', sets: 3, reps: '10–12', note: 'Slow eccentric. VMO. No back involvement.' },
+          { id: 'mon_d2', prefix: 'B', name: 'Reverse Nordic Curl', sets: 3, reps: '8–10', note: 'Quad eccentric focus. Knee health — control the descent. No back involvement.' },
         ]
       },
     ]
@@ -656,7 +764,7 @@ const PROGRAM = {
   TUE: {
     title: 'Full Body 2',
     subtitle: 'Main Gym · ~55 min · Upper emphasis',
-    note: '⚑ Smith incline lighter than usual. No heavy rowing. Suitcase carry and bear crawl for core.',
+    note: '⚑ Smith incline lighter than usual. No heavy rowing. Pallof press and suitcase carry for core.',
     blocks: [
       {
         label: 'BLOCK A', type: 'Main Compound — Standalone',
@@ -667,7 +775,7 @@ const PROGRAM = {
       {
         label: 'BLOCK B', type: 'Superset: Vertical Pull + Core Carry',
         exercises: [
-          { id: 'tue_b1', prefix: 'A', name: 'Neutral Grip Lat Pulldown', sets: 3, reps: '10–12', note: 'Replaces weighted pull-ups — less spinal compression.' },
+          { id: 'tue_b1', prefix: 'A', name: 'Neutral Grip Lat Pulldown', sets: 3, reps: '10–12', note: 'Vertical pull. Center back emphasis.' },
           { id: 'tue_b2', prefix: 'B', name: 'Suitcase Carry March', sets: 3, reps: '20 steps/side', note: 'Light KB. KB at shoulder one side, waist other. Anti-lateral core.' },
         ]
       },
@@ -675,36 +783,22 @@ const PROGRAM = {
         label: 'BLOCK C', type: 'Superset: Chest + Core',
         exercises: [
           { id: 'tue_c1', prefix: 'A', name: 'Cable Chest Fly', sets: 3, reps: '12–15', note: 'Stretch focused. Light.' },
-          { id: 'tue_c2', prefix: 'B', name: 'Bear Crawl KB Transfer', sets: 3, reps: '8 transfers', note: '4-point stance. No rotation. Easy on back.' },
+          { id: 'tue_c2', prefix: 'B', name: 'Pallof Press', sets: 3, reps: '12/side', note: 'Anti-rotation core. Tennis carry-over. Easy on back.' },
         ]
       },
       {
         label: 'BLOCK D', type: 'Superset: Shoulder + Tricep',
         exercises: [
-          { id: 'tue_d1', prefix: 'A', name: 'KB Shoulder Press', sets: 3, reps: '10–12', note: '' },
+          { id: 'tue_d1', prefix: 'A', name: 'Cable Lateral Raise (Full ROM)', sets: 3, reps: '12–15', note: 'Slow and controlled. Full range for mobility and strength.' },
           { id: 'tue_d2', prefix: 'B', name: 'Cable Tricep Overhead Extension', sets: 3, reps: '10–12', note: 'Long head emphasis.' },
         ]
       },
     ]
   },
   WED: {
+    type: 'rowing',
     title: 'VO2 Max',
     subtitle: 'Main Gym · ~40 min · 4x4 Rowing Intervals',
-    note: 'Keep rowing as usual — good for the back. Burpees replaced with hip mobility warm-up this week.',
-    blocks: [
-      {
-        label: 'WARM-UP', type: 'Mobility',
-        exercises: [
-          { id: 'wed_a1', prefix: '', name: 'Hip 90/90 Rotations', sets: 2, reps: '8/side', note: 'Opens piriformis gently. Slow and controlled.' },
-        ]
-      },
-      {
-        label: 'MAIN', type: 'Intervals',
-        exercises: [
-          { id: 'wed_b1', prefix: '', name: 'Rowing Machine — 4x4 Intervals', sets: 4, reps: '4 min on / 4 min Z2', note: '~80% max HR on, Zone 2 active recovery between rounds.' },
-        ]
-      },
-    ]
   },
   THU: {
     title: 'Full Body 3',
@@ -744,12 +838,12 @@ const PROGRAM = {
   SAT: {
     title: 'Full Body 4',
     subtitle: 'Main Gym · ~55 min · Pull dominant',
-    note: '⚑ Weighted pull-ups replaced with lat pulldown. Barbell row dropped. Single arm DB row replaces it — no bilateral spinal load.',
+    note: '⚑ Weighted pull-ups replaced with Gorilla Row this week — horizontal pull, no spinal compression. Barbell row dropped. Single arm DB row for back accessory.',
     blocks: [
       {
         label: 'BLOCK A', type: 'Main Compound — Standalone',
         exercises: [
-          { id: 'sat_a1', prefix: '', name: 'Neutral Grip Lat Pulldown', sets: 4, reps: '10–12', note: 'Replaces weighted pull-ups. Vertical pull, no spinal compression.' },
+          { id: 'sat_a1', prefix: '', name: 'Gorilla Row', sets: 4, reps: '8/side', note: 'Horizontal pull. Heavy anchor. Rotational demand. Brace core throughout.' },
         ]
       },
       {
@@ -787,6 +881,33 @@ const PROGRAM = {
 let currentWeek = 1;
 let currentDay = 0;
 const MAX_WEEKS = 4;
+
+const PULLEY_EXERCISES = new Set([
+  'Cable Chest Fly',
+  'Cable Lateral Raise (Full ROM)',
+  'Cable Tricep Overhead Extension',
+  'Pallof Press',
+  'Face Pull',
+  'Single Arm Rear Delt Cable',
+  'Bayesian Bicep Curl',
+]);
+
+// Fatigue emoji state — saves per session per exercise
+function getFatigueKey(week, dayKey, exId) {
+  return `alberto_w${week}_${dayKey}_${exId}_fatigue`;
+}
+function getFatigue(week, dayKey, exId) {
+  return localStorage.getItem(getFatigueKey(week, dayKey, exId)) || '';
+}
+function setFatigue(week, dayKey, exId, value) {
+  localStorage.setItem(getFatigueKey(week, dayKey, exId), value);
+  render();
+}
+
+// DP toggle state — does NOT save, just in-memory for the session
+const dpState = {};
+function getDp(exId) { return dpState[exId] || false; }
+function toggleDp(exId) { dpState[exId] = !dpState[exId]; render(); }
 
 function getExUnitKey(dayKey, exId) {
   return `alberto_${dayKey}_${exId}_unit`;
@@ -895,6 +1016,49 @@ function renderDay() {
   const day = PROGRAM[dayKey];
   const container = document.getElementById('dayContent');
 
+  if (day.type === 'rowing') {
+    const saved = JSON.parse(localStorage.getItem(`alberto_w${currentWeek}_WED_rowing`) || '{}');
+    const isComplete = isDayCompleted(currentWeek, 'WED');
+
+    const fields = [
+      { key: 'time',     label: 'Time Spent',  placeholder: 'e.g. 42:30',  unit: 'min' },
+      { key: 'distance', label: 'Distance',     placeholder: 'e.g. 8200',   unit: 'm' },
+      { key: 'pace',     label: 'Avg Pace',     placeholder: 'e.g. 2:05',   unit: '/500m' },
+      { key: 'watts',    label: 'Avg Watts',    placeholder: 'e.g. 185',    unit: 'W' },
+      { key: 'avghr',    label: 'Avg HR',       placeholder: 'e.g. 158',    unit: 'bpm' },
+      { key: 'maxhr',    label: 'Max HR',       placeholder: 'e.g. 174',    unit: 'bpm' },
+    ];
+
+    let rows = fields.map(f => `
+      <div class="rowing-field">
+        <div class="rowing-field-label">${f.label}</div>
+        <div class="rowing-field-input-wrap">
+          <input
+            type="text"
+            class="rowing-input ${saved[f.key] ? 'filled' : ''}"
+            placeholder="${f.placeholder}"
+            value="${saved[f.key] || ''}"
+            ${isComplete ? 'disabled' : ''}
+            onchange="saveRowingField('${f.key}', this.value); this.classList.toggle('filled', !!this.value)">
+          <span class="rowing-unit">${f.unit}</span>
+        </div>
+      </div>`).join('');
+
+    container.innerHTML = `
+      <div class="day-header">
+        <div class="day-title">Wednesday — VO2 Max</div>
+        <div class="day-subtitle">Main Gym · ~40 min · 4x4 Rowing Intervals</div>
+        <div class="day-note">4 rounds · 4 min ~80% max HR · 4 min Zone 2 active recovery. Warm up with hip 90/90 rotations before starting.</div>
+      </div>
+      <div class="rowing-grid">${rows}</div>
+      <button class="complete-btn ${isComplete ? 'done' : ''}"
+        onclick="completeDay('WED')"
+        ${isComplete ? 'disabled' : ''}>
+        ${isComplete ? '✓ SESSION LOGGED' : 'MARK SESSION COMPLETE'}
+      </button>`;
+    return;
+  }
+
   if (day.type === 'rest') {
     container.innerHTML = `
       <div class="rest-day">
@@ -934,14 +1098,27 @@ function renderDay() {
       const supersetClass = ex.prefix === 'A' ? 'superset-a' : ex.prefix === 'B' ? 'superset-b' : '';
       const setCount = getSetCount(currentWeek, dayKey, ex.id, ex.sets);
       const exUnit = getExUnit(dayKey, ex.id);
+      const isPulley = PULLEY_EXERCISES.has(ex.name);
+      const dp = getDp(ex.id);
+      const fatigue = getFatigue(currentWeek, dayKey, ex.id);
 
       html += `<div class="exercise-row ${supersetClass}">
         <div>
           <div class="ex-name">
             ${ex.prefix ? `<span class="ex-prefix">${ex.prefix}</span>` : ''}
             ${ex.name}
+            ${isPulley ? `<button class="dp-tag ${dp ? 'active' : ''}" onclick="toggleDp('${ex.id}')" title="Double pulley">dp</button>` : ''}
           </div>
-          <div class="ex-meta">${ex.sets} sets · ${ex.reps}</div>
+          <div class="ex-meta-row">
+            <span class="ex-meta">${ex.sets} sets · ${ex.reps}</span>
+            <select class="fatigue-select ${fatigue ? 'has-value' : ''}" 
+              onchange="setFatigue(${currentWeek},'${dayKey}','${ex.id}',this.value)"
+              ${completed ? 'disabled' : ''}>
+              <option value="" ${fatigue === '' ? 'selected' : ''}>—</option>
+              <option value="💀" ${fatigue === '💀' ? 'selected' : ''}>💀 Hard</option>
+              <option value="☠️" ${fatigue === '☠️' ? 'selected' : ''}>☠️ Near failure</option>
+            </select>
+          </div>
           ${ex.note ? `<div class="ex-note">${ex.note}</div>` : ''}
         </div>
         <div class="ex-inputs" id="inputs_${ex.id}">
@@ -988,6 +1165,13 @@ function renderDay() {
   </button>`;
 
   container.innerHTML = html;
+}
+
+function saveRowingField(key, value) {
+  const storKey = `alberto_w${currentWeek}_WED_rowing`;
+  const existing = JSON.parse(localStorage.getItem(storKey) || '{}');
+  existing[key] = value;
+  localStorage.setItem(storKey, JSON.stringify(existing));
 }
 
 function saveVal(dayKey, exId, setIdx, field, value) {
