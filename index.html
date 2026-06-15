@@ -534,6 +534,54 @@
     font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; letter-spacing: 1px;
   }
   .modal-close:hover { color: var(--text); }
+
+  /* Google Health integration */
+  .gh-connect-btn {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--accent-soft); border: 1px solid var(--accent-dim);
+    border-radius: 8px; color: var(--accent); padding: 6px 12px;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .gh-connect-btn:hover { background: var(--accent); color: var(--accent-text); }
+  .gh-connect-btn.connected { background: #12261a; border-color: #2a6a3a; color: #4caf7a; }
+  .gh-connect-btn .gh-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  .gh-pull-btn {
+    display: block; width: 100%; margin-top: 10px; padding: 11px;
+    background: var(--accent-soft); border: 1px solid var(--accent-dim);
+    border-radius: 9px; color: var(--accent); font-family: 'DM Mono', monospace;
+    font-size: 12px; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s;
+  }
+  .gh-pull-btn:hover { background: var(--accent); color: var(--accent-text); }
+  .gh-pull-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .gh-stats {
+    background: #0f1820; border: 1px solid #1a3040;
+    border-radius: 10px; padding: 14px; margin-top: 10px;
+  }
+  .gh-stats-title {
+    font-family: 'DM Mono', monospace; font-size: 10px; color: #4caf7a;
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .gh-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gh-stat { text-align: center; }
+  .gh-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--text); letter-spacing: 1px; line-height: 1; }
+  .gh-stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+
+  .session-picker { margin: 0 0 4px; }
+  .session-picker-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .session-option {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
+  }
+  .session-option:hover { border-color: var(--accent); }
+  .session-option-name { font-size: 13px; font-weight: 500; }
+  .session-option-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .session-option-dur { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); }
+  .gh-loading { text-align: center; padding: 20px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .gh-error { padding: 12px; background: #1a0a0a; border: 1px solid #3a1a1a; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 11px; color: #e88; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -545,6 +593,9 @@
   </div>
   <div class="header-controls">
     <button class="icon-btn" id="dataBtn" onclick="openDataMenu()" title="Backup & data">⤓</button>
+    <button class="gh-connect-btn" id="ghBtn" onclick="ghConnect()" title="Google Health">
+      <span class="gh-dot"></span><span id="ghBtnLabel">Connect Health</span>
+    </button>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☾</button>
     <div class="week-nav" id="weekNav">
       <button onclick="changeWeek(-1)">‹</button>
@@ -571,6 +622,15 @@
 
 <!-- Data / Backup modal -->
 <div class="modal-overlay" id="dataModal" onclick="if(event.target===this)closeDataMenu()">
+
+<!-- Google Health session picker modal -->
+<div class="modal-overlay" id="ghModal" onclick="if(event.target===this)closeGhModal()">
+  <div class="modal">
+    <div class="modal-title">Pull Health Data</div>
+    <div id="ghModalBody"><div class="gh-loading">Loading sessions…</div></div>
+    <button class="modal-close" onclick="closeGhModal()">Cancel</button>
+  </div>
+</div>
   <div class="modal">
     <div class="modal-title">Backup & Data</div>
     <p class="modal-desc">Your training data lives only on this device. Export a backup file regularly so you never lose your history — you can restore it anytime, even on a new phone.</p>
@@ -960,6 +1020,8 @@ function renderDay(){
   if (completed){
     html += `<div style="text-align:center;"><button class="edit-link" onclick="unlockDay('${dayKey}')">edit this session</button></div>`;
   }
+  // Google Health pull button — always visible if connected
+  html += ghPullSection(dayKey, currentWeek);
   container.innerHTML = html;
 }
 
@@ -995,7 +1057,8 @@ function renderRowing(container, dayKey){
       <textarea class="notes-input" placeholder="How did it feel? Pace good, HR high, legs still sore…" onchange="saveSessionNote('WED',this.value)" ${isComplete?'disabled':''}>${rowingNote}</textarea>
     </div>
     <button class="complete-btn ${isComplete?'done':''}" onclick="completeDay('WED')" ${isComplete?'disabled':''}>${isComplete?'✓ SESSION LOGGED':'MARK SESSION COMPLETE'}</button>
-    ${isComplete ? `<div style="text-align:center;"><button class="edit-link" onclick="unlockDay('WED')">edit this session</button></div>` : ''}`;
+    ${isComplete ? `<div style="text-align:center;"><button class="edit-link" onclick="unlockDay('WED')">edit this session</button></div>` : ''}
+    ${ghPullSection('WED', currentWeek)}`;
 }
 
 function saveRowingField(key, value){
@@ -1353,12 +1416,237 @@ function render(){
   if (currentView === 'progress') renderProgress();
 }
 
+// ═══════════════════════════════════════════════════════════
+// GOOGLE HEALTH INTEGRATION
+// ═══════════════════════════════════════════════════════════
+
+const GH_SCOPES = [
+  'https://www.googleapis.com/auth/health.activity.readonly',
+  'https://www.googleapis.com/auth/health.heart_rate.readonly',
+].join(' ');
+
+const GH_CLIENT_ID = '846950109629-51um654ceni0075fup38vk2i0fr0pets.apps.googleusercontent.com';
+const GH_REDIRECT  = window.location.origin + '/.netlify/functions/auth-callback';
+const FUNCTION_BASE = '/.netlify/functions/health-data';
+
+// Token storage
+function saveGhTokens(t){ localStorage.setItem('gh_tokens', JSON.stringify(t)); }
+function loadGhTokens(){ try { return JSON.parse(localStorage.getItem('gh_tokens')); } catch(e){ return null; } }
+function clearGhTokens(){ localStorage.removeItem('gh_tokens'); }
+function isGhConnected(){ const t = loadGhTokens(); return !!(t && t.access_token); }
+
+// Saved health data per week+day
+function ghDataKey(w,d){ return `gh_data_w${w}_${d}`; }
+function saveGhData(w,d,data){ localStorage.setItem(ghDataKey(w,d), JSON.stringify(data)); }
+function loadGhData(w,d){ try { return JSON.parse(localStorage.getItem(ghDataKey(w,d))); } catch(e){ return null; } }
+
+// ── OAuth flow ───────────────────────────────────────────────────────────────
+
+function ghConnect(){
+  if (isGhConnected()){
+    if (confirm('Disconnect Google Health?')){ clearGhTokens(); updateGhBtn(); render(); }
+    return;
+  }
+  // Build Google OAuth URL
+  const params = new URLSearchParams({
+    client_id:     GH_CLIENT_ID,
+    redirect_uri:  GH_REDIRECT,
+    response_type: 'code',
+    scope:         GH_SCOPES,
+    access_type:   'offline',
+    prompt:        'consent'
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+// Called on page load — handle OAuth redirect with tokens in fragment
+function handleGhCallback(){
+  const hash = window.location.hash;
+  if (!hash.includes('gh_tokens=')) return;
+
+  try {
+    const raw = decodeURIComponent(hash.split('gh_tokens=')[1]);
+    const tokens = JSON.parse(raw);
+    if (tokens.access_token){
+      saveGhTokens(tokens);
+      // Clean the URL so tokens don't stay in history
+      history.replaceState(null, '', window.location.pathname);
+    }
+  } catch(e){
+    console.warn('GH token parse failed', e);
+  }
+
+  // Also handle auth errors in query string
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('auth_error')){
+    alert('Google Health connection failed: ' + urlParams.get('auth_error'));
+    history.replaceState(null, '', window.location.pathname);
+  }
+}
+
+// ── Token refresh ────────────────────────────────────────────────────────────
+
+async function getValidAccessToken(){
+  const tokens = loadGhTokens();
+  if (!tokens) return null;
+
+  // If token expires in less than 2 minutes, refresh
+  const needsRefresh = !tokens.expires_at || (Date.now() > tokens.expires_at - 120000);
+  if (needsRefresh && tokens.refresh_token){
+    try {
+      const url = `${FUNCTION_BASE}?action=noop&refresh=1&refresh_token=${encodeURIComponent(tokens.refresh_token)}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${tokens.access_token || ''}` } });
+      const data = await res.json();
+      if (data.newTokens){
+        const updated = { ...tokens, ...data.newTokens };
+        saveGhTokens(updated);
+        return updated.access_token;
+      }
+    } catch(e){ /* fall through, try with existing */ }
+  }
+  return tokens.access_token;
+}
+
+// ── UI helpers ───────────────────────────────────────────────────────────────
+
+function updateGhBtn(){
+  const btn = document.getElementById('ghBtn');
+  const lbl = document.getElementById('ghBtnLabel');
+  if (!btn) return;
+  if (isGhConnected()){
+    btn.classList.add('connected');
+    lbl.textContent = 'Health ✓';
+  } else {
+    btn.classList.remove('connected');
+    lbl.textContent = 'Connect Health';
+  }
+}
+
+function ghPullSection(dayKey, week){
+  if (!isGhConnected()) return '';
+  const saved = loadGhData(week, dayKey);
+  if (saved){
+    return ghStatsHTML(saved);
+  }
+  return `<button class="gh-pull-btn" onclick="openGhModal('${dayKey}')">🫀 Pull health data from Google Health</button>`;
+}
+
+function ghStatsHTML(data){
+  const stat = (val, lbl) => val != null
+    ? `<div class="gh-stat"><div class="gh-stat-val">${val}</div><div class="gh-stat-lbl">${lbl}</div></div>`
+    : '';
+  return `
+    <div class="gh-stats">
+      <div class="gh-stats-title">🫀 Health Data</div>
+      <div class="gh-stats-grid">
+        ${stat(data.avgHR   ? data.avgHR + ' bpm'   : null, 'Avg HR')}
+        ${stat(data.maxHR   ? data.maxHR + ' bpm'   : null, 'Max HR')}
+        ${stat(data.activeZoneMinutes ? data.activeZoneMinutes + ' min' : null, 'Active Zones')}
+        ${stat(data.calories ? data.calories + ' kcal' : null, 'Calories')}
+        ${stat(data.sessionName || null, 'Activity')}
+        ${stat(data.duration || null, 'Duration')}
+      </div>
+      <div style="text-align:center;margin-top:10px;">
+        <button class="edit-link" onclick="clearGhData('${data._dayKey}','${data._week}')">clear health data</button>
+      </div>
+    </div>`;
+}
+
+function clearGhData(dayKey, week){
+  localStorage.removeItem(ghDataKey(week, dayKey));
+  render();
+}
+
+// ── Session picker modal ─────────────────────────────────────────────────────
+
+let ghCurrentDay = null;
+
+async function openGhModal(dayKey){
+  ghCurrentDay = dayKey;
+  document.getElementById('ghModal').classList.add('open');
+  document.getElementById('ghModalBody').innerHTML = '<div class="gh-loading">Fetching your sessions…</div>';
+
+  try {
+    const token = await getValidAccessToken();
+    if (!token){ document.getElementById('ghModalBody').innerHTML = '<div class="gh-error">Not connected. Tap "Connect Health" first.</div>'; return; }
+
+    // Get today's date in YYYY-MM-DD
+    const now = new Date();
+    const date = now.toISOString().slice(0,10);
+
+    const res = await fetch(`${FUNCTION_BASE}?action=sessions&date=${date}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (res.status === 401){ document.getElementById('ghModalBody').innerHTML = '<div class="gh-error">Session expired. Tap "Connect Health" to reconnect.</div>'; return; }
+
+    const sessions = data.sessions || [];
+    if (sessions.length === 0){
+      document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">No exercise sessions found for today. Make sure you started a workout in the Google Health app.</div>`;
+      return;
+    }
+
+    let html = `<div class="session-picker"><div class="session-picker-label">Select your session</div>`;
+    sessions.forEach(s => {
+      html += `<div class="session-option" onclick="selectGhSession(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+        <div>
+          <div class="session-option-name">${s.activityName}</div>
+          <div class="session-option-time">${s.startLabel} → ${s.endLabel}</div>
+        </div>
+        <div class="session-option-dur">${s.duration || ''}</div>
+      </div>`;
+    });
+    html += '</div>';
+    document.getElementById('ghModalBody').innerHTML = html;
+
+  } catch(e){
+    document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">Error: ${e.message}</div>`;
+  }
+}
+
+async function selectGhSession(session){
+  document.getElementById('ghModalBody').innerHTML = '<div class="gh-loading">Pulling heart rate data…</div>';
+
+  try {
+    const token = await getValidAccessToken();
+    const url = `${FUNCTION_BASE}?action=hr&session_start=${encodeURIComponent(session.startTime)}&session_end=${encodeURIComponent(session.endTime)}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+
+    const healthData = {
+      avgHR:             data.avgHR,
+      maxHR:             data.maxHR,
+      activeZoneMinutes: data.activeZoneMinutes,
+      calories:          data.calories,
+      sessionName:       session.activityName,
+      duration:          session.duration,
+      _dayKey:           ghCurrentDay,
+      _week:             currentWeek
+    };
+
+    saveGhData(currentWeek, ghCurrentDay, healthData);
+    closeGhModal();
+    render();
+
+  } catch(e){
+    document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">Failed to fetch HR data: ${e.message}</div>`;
+  }
+}
+
+function closeGhModal(){
+  document.getElementById('ghModal').classList.remove('open');
+  ghCurrentDay = null;
+}
+
 // init
 const today = new Date().getDay();
 const dayMap = [6,0,1,2,3,4,5];
 currentDay = dayMap[today];
 updateThemeBtn();
 updateWeekLabel();
+handleGhCallback();   // handle OAuth redirect if returning from Google
+updateGhBtn();
 render();
 </script>
 </body>
