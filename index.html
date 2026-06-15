@@ -622,15 +622,6 @@
 
 <!-- Data / Backup modal -->
 <div class="modal-overlay" id="dataModal" onclick="if(event.target===this)closeDataMenu()">
-
-<!-- Google Health session picker modal -->
-<div class="modal-overlay" id="ghModal" onclick="if(event.target===this)closeGhModal()">
-  <div class="modal">
-    <div class="modal-title">Pull Health Data</div>
-    <div id="ghModalBody"><div class="gh-loading">Loading sessions…</div></div>
-    <button class="modal-close" onclick="closeGhModal()">Cancel</button>
-  </div>
-</div>
   <div class="modal">
     <div class="modal-title">Backup & Data</div>
     <p class="modal-desc">Your training data lives only on this device. Export a backup file regularly so you never lose your history — you can restore it anytime, even on a new phone.</p>
@@ -639,6 +630,15 @@
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this.files[0])">
     <div class="modal-status" id="modalStatus"></div>
     <button class="modal-close" onclick="closeDataMenu()">Close</button>
+  </div>
+</div>
+
+<!-- Google Health session picker modal -->
+<div class="modal-overlay" id="ghModal" onclick="if(event.target===this)closeGhModal()">
+  <div class="modal">
+    <div class="modal-title">Pull Health Data</div>
+    <div id="ghModalBody"><div class="gh-loading">Loading sessions…</div></div>
+    <button class="modal-close" onclick="closeGhModal()">Cancel</button>
   </div>
 </div>
 
@@ -1560,9 +1560,11 @@ function clearGhData(dayKey, week){
 // ── Session picker modal ─────────────────────────────────────────────────────
 
 let ghCurrentDay = null;
+let ghSessions = []; // module-level store — avoids JSON serialization in onclick attrs
 
 async function openGhModal(dayKey){
   ghCurrentDay = dayKey;
+  ghSessions = [];
   document.getElementById('ghModal').classList.add('open');
   document.getElementById('ghModalBody').innerHTML = '<div class="gh-loading">Fetching your sessions…</div>';
 
@@ -1570,9 +1572,9 @@ async function openGhModal(dayKey){
     const token = await getValidAccessToken();
     if (!token){ document.getElementById('ghModalBody').innerHTML = '<div class="gh-error">Not connected. Tap "Connect Health" first.</div>'; return; }
 
-    // Get today's date in YYYY-MM-DD
-    const now = new Date();
-    const date = now.toISOString().slice(0,10);
+    // Get today's date in YYYY-MM-DD local time (not UTC — avoids timezone offset issues)
+    const now2 = new Date();
+    const date = `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}-${String(now2.getDate()).padStart(2,'0')}`;
 
     const res = await fetch(`${FUNCTION_BASE}?action=sessions&date=${date}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -1582,14 +1584,16 @@ async function openGhModal(dayKey){
     if (res.status === 401){ document.getElementById('ghModalBody').innerHTML = '<div class="gh-error">Session expired. Tap "Connect Health" to reconnect.</div>'; return; }
 
     const sessions = data.sessions || [];
+    ghSessions = sessions; // store for index-based onclick access
+
     if (sessions.length === 0){
-      document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">No exercise sessions found for today. Make sure you started a workout in the Google Health app.</div>`;
+      document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">No exercise sessions found for today.<br><br>Make sure you started a workout in the Google Health app before training.</div>`;
       return;
     }
 
     let html = `<div class="session-picker"><div class="session-picker-label">Select your session</div>`;
-    sessions.forEach(s => {
-      html += `<div class="session-option" onclick="selectGhSession(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+    sessions.forEach((s, i) => {
+      html += `<div class="session-option" onclick="selectGhSession(${i})">
         <div>
           <div class="session-option-name">${s.activityName}</div>
           <div class="session-option-time">${s.startLabel} → ${s.endLabel}</div>
@@ -1605,7 +1609,9 @@ async function openGhModal(dayKey){
   }
 }
 
-async function selectGhSession(session){
+async function selectGhSession(idx){
+  const session = ghSessions[idx];
+  if (!session){ document.getElementById('ghModalBody').innerHTML = '<div class="gh-error">Session not found. Please try again.</div>'; return; }
   document.getElementById('ghModalBody').innerHTML = '<div class="gh-loading">Pulling heart rate data…</div>';
 
   try {
