@@ -1587,7 +1587,10 @@ async function openGhModal(dayKey){
     ghSessions = sessions; // store for index-based onclick access
 
     if (sessions.length === 0){
-      document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">No exercise sessions found for today.<br><br>Make sure you started a workout in the Google Health app before training.</div>`;
+      // Show debug option so we can see what the API actually returns
+      document.getElementById('ghModalBody').innerHTML = `
+        <div class="gh-error">No exercise sessions found for today.<br><br>Make sure you started a workout in the Google Health app before training.</div>
+        <button class="gh-pull-btn" style="margin-top:12px" onclick="runGhDebug()">🔍 Run diagnostic</button>`;
       return;
     }
 
@@ -1637,6 +1640,30 @@ async function selectGhSession(idx){
 
   } catch(e){
     document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">Failed to fetch HR data: ${e.message}</div>`;
+  }
+}
+
+async function runGhDebug(){
+  document.getElementById('ghModalBody').innerHTML = '<div class="gh-loading">Running diagnostic — checking all API endpoints…</div>';
+  try {
+    const token = await getValidAccessToken();
+    const now2 = new Date();
+    const date = `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}-${String(now2.getDate()).padStart(2,'0')}`;
+    const res = await fetch(`${FUNCTION_BASE}?action=debug&date=${date}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const r = data.results || {};
+    let html = '<div style="font-family:monospace;font-size:11px;line-height:1.8;color:var(--text-dim)">';
+    Object.keys(r).forEach(key => {
+      const v = r[key];
+      const found = v.points > 0 || v.sessions > 0 || (v.types && v.types.length > 0);
+      html += `<div style="color:${found?'var(--accent)':'var(--muted)'}">${found?'✓':'—'} ${key}: ${JSON.stringify(v).substring(0,120)}</div>`;
+    });
+    html += '</div>';
+    document.getElementById('ghModalBody').innerHTML = html;
+  } catch(e){
+    document.getElementById('ghModalBody').innerHTML = `<div class="gh-error">Debug error: ${e.message}</div>`;
   }
 }
 
