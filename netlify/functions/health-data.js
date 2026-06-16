@@ -1,8 +1,13 @@
 // netlify/functions/health-data.js
+// Google Health API v4 — correct implementation
+// Data type: "exercise" (kebab-case in URL, snake_case in filter)
+// Filter: filter=exercise.interval.civil_start_time >= "YYYY-MM-DDTHH:MM:SS"
+// Scope: googlehealth.activity_and_fitness.readonly (already granted)
 
 const https = require('https');
 const querystring = require('querystring');
 
+// ── HTTP helper ──────────────────────────────────────────────────────────────
 function get(url, accessToken) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -24,6 +29,7 @@ function get(url, accessToken) {
   });
 }
 
+// ── Token refresh ────────────────────────────────────────────────────────────
 async function refreshToken(refreshTok) {
   return new Promise((resolve, reject) => {
     const data = querystring.stringify({
@@ -33,13 +39,8 @@ async function refreshToken(refreshTok) {
       grant_type: 'refresh_token'
     });
     const req = https.request({
-      hostname: 'oauth2.googleapis.com',
-      path: '/token',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': Buffer.byteLength(data)
-      }
+      hostname: 'oauth2.googleapis.com', path: '/token', method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(data) }
     }, (res) => {
       let raw = '';
       res.on('data', c => raw += c);
@@ -51,8 +52,11 @@ async function refreshToken(refreshTok) {
   });
 }
 
-function formatDuration(ms) {
-  if (!ms) return null;
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function formatDuration(startIso, endIso) {
+  if (!startIso || !endIso) return null;
+  const ms = new Date(endIso) - new Date(startIso);
+  if (ms <= 0) return null;
   const totalMin = Math.round(ms / 60000);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
@@ -61,17 +65,22 @@ function formatDuration(ms) {
 
 function getActivityName(type) {
   const map = {
-    '80': 'Weights', '82': 'Weights', '135': 'Weights',
-    '109': 'Row Machine', '108': 'Row Machine',
-    '97': 'Running', '1': 'Biking', '63': 'Tennis',
-    'WEIGHTS_TRAINING': 'Weights', 'WEIGHT_TRAINING': 'Weights',
-    'STRENGTH_TRAINING': 'Strength Training',
+    'WEIGHTS': 'Weights', 'WEIGHT_TRAINING': 'Weights', 'WEIGHTS_TRAINING': 'Weights',
+    'STRENGTH_TRAINING': 'Strength Training', 'FUNCTIONAL_STRENGTH_TRAINING': 'Functional Training',
     'ROWING_MACHINE': 'Row Machine', 'ROWING': 'Row Machine',
-    'RUNNING': 'Running', 'TENNIS': 'Tennis',
+    'RUNNING': 'Running', 'CYCLING': 'Cycling', 'SWIMMING_POOL': 'Swimming',
+    'TENNIS': 'Tennis', 'HIGH_INTENSITY_INTERVAL_TRAINING': 'HIIT',
+    'YOGA': 'Yoga', 'WALKING': 'Walking', 'ELLIPTICAL': 'Elliptical',
   };
   return map[String(type)] || String(type) || 'Workout';
 }
 
+function fmtTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+// ── Main handler ─────────────────────────────────────────────────────────────
 exports.handler = async function(event) {
   const corsOrigin = process.env.NETLIFY_URL;
   const headers = {
@@ -106,111 +115,129 @@ exports.handler = async function(event) {
 
   if (!accessToken) return { statusCode: 401, headers, body: JSON.stringify({ error: 'no_token' }) };
 
-  // ── DEBUG ────────────────────────────────────────────────────────────────────
+  const BASE = 'https://health.googleapis.com/v4/users/me';
+
+  // ── DEBUG ─────────────────────────────────────────────────────────────────
   if (action === 'debug') {
     const d = date ? new Date(date + 'T00:00:00') : new Date();
-    const startOfDay = new Date(d); startOfDay.setHours(0,0,0,0);
-    const endOfDay = new Date(d); endOfDay.setHours(23,59,59,999);
-    const startIso = startOfDay.toISOString();
-    const endIso = endOfDay.toISOString();
-    const startMs = startOfDay.getTime();
-    const endMs = endOfDay.getTime();
-    const startNs = startMs * 1000000;
-    const endNs = endMs * 1000000;
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const filterStr = `exercise.interval.civil_start_time >= "${dateStr}T00:00:00" AND exercise.interval.civil_start_time <= "${dateStr}T23:59:59"`;
 
     const results = {};
-    const FIT = 'https://www.googleapis.com/fitness/v1/users/me';
-    const HEALTH = 'https://health.googleapis.com/v4/users/-';
 
-    // Google Fit sessions (primary target)
-    const fitSess = await get(`${FIT}/sessions?startTime=${startIso}&endTime=${endIso}`, accessToken);
-    results['fit_sessions'] = { status: fitSess.status, count: fitSess.body.session ? fitSess.body.session.length : 0, sessions: fitSess.body.session ? fitSess.body.session.map(s=>({name:s.name,type:s.activityType,start:new Date(parseInt(s.startTimeMillis)).toISOString()})) : [], error: fitSess.body.error };
+    // 1. Exercise with correct filter (the fix)
+    const exUrl = `${BASE}/dataTypes/exercise/dataPoints?filter=${encodeURIComponent(filterStr)}`;
+    const exRes = await get(exUrl, accessToken);
+    results['exercise_correct_filter'] = {
+      status: exRes.status,
+      count: exRes.body.dataPoints ? exRes.body.dataPoints.length : 0,
+      error: exRes.body.error && exRes.body.error.message,
+      sample: exRes.body.dataPoints && exRes.body.dataPoints[0]
+    };
 
-    // Google Fit HR dataset
-    const fitHr = await get(`${FIT}/dataSources/derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm/datasets/${startNs}-${endNs}`, accessToken);
-    results['fit_hr'] = { status: fitHr.status, points: fitHr.body.point ? fitHr.body.point.length : 0, error: fitHr.body.error };
+    // 2. Exercise without filter (get all, to confirm scope works)
+    const exAllRes = await get(`${BASE}/dataTypes/exercise/dataPoints`, accessToken);
+    results['exercise_no_filter'] = {
+      status: exAllRes.status,
+      count: exAllRes.body.dataPoints ? exAllRes.body.dataPoints.length : 0,
+      error: exAllRes.body.error && exAllRes.body.error.message,
+      types: exAllRes.body.dataPoints && exAllRes.body.dataPoints.slice(0,3).map(p => ({
+        type: p.exercise && p.exercise.activityType,
+        start: p.exercise && p.exercise.interval && p.exercise.interval.startTime
+      }))
+    };
 
-    // Health API with snake_case params
-    const healthTypes = ['exercise-session','workout','activity','exercise'];
-    for (const t of healthTypes) {
-      const r = await get(`${HEALTH}/dataTypes/${t}/dataPoints?start_time=${startIso}&end_time=${endIso}`, accessToken);
-      results[`health_${t}_snake`] = { status: r.status, points: (r.body.dataPoints||[]).length, error: r.body.error };
-    }
+    // 3. Heart rate with correct filter format
+    const hrFilter = `heart_rate.interval.civil_start_time >= "${dateStr}T00:00:00"`;
+    const hrRes = await get(`${BASE}/dataTypes/heart-rate/dataPoints?filter=${encodeURIComponent(hrFilter)}`, accessToken);
+    results['heart_rate_correct_filter'] = {
+      status: hrRes.status,
+      count: hrRes.body.dataPoints ? hrRes.body.dataPoints.length : 0,
+      error: hrRes.body.error && hrRes.body.error.message
+    };
 
-    // Health API without time filter (get everything)
-    const healthAll = await get(`${HEALTH}/dataTypes/exercise-session/dataPoints`, accessToken);
-    results['health_exercise_session_nofilter'] = { status: healthAll.status, points: (healthAll.body.dataPoints||[]).length, error: healthAll.body.error };
-
-    return { statusCode: 200, headers, body: JSON.stringify({ debug: true, results, newTokens }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ debug: true, filter: filterStr, results, newTokens }) };
   }
 
-  // ── SESSIONS ─────────────────────────────────────────────────────────────────
+  // ── SESSIONS ──────────────────────────────────────────────────────────────
   if (action === 'sessions') {
     if (!date) return { statusCode: 400, headers, body: JSON.stringify({ error: 'missing date' }) };
 
-    const d = new Date(date + 'T00:00:00');
-    const startOfDay = new Date(d); startOfDay.setHours(0,0,0,0);
-    const endOfDay = new Date(d); endOfDay.setHours(23,59,59,999);
+    // Build filter using civil_start_time (correct Health API filter format)
+    const filterStr = `exercise.interval.civil_start_time >= "${date}T00:00:00" AND exercise.interval.civil_start_time <= "${date}T23:59:59"`;
+    const url = `${BASE}/dataTypes/exercise/dataPoints?filter=${encodeURIComponent(filterStr)}`;
+    const res = await get(url, accessToken);
 
-    // PRIMARY: Google Fit Sessions API
-    const FIT = 'https://www.googleapis.com/fitness/v1/users/me';
-    const fitRes = await get(`${FIT}/sessions?startTime=${startOfDay.toISOString()}&endTime=${endOfDay.toISOString()}`, accessToken);
+    if (res.status === 401) return { statusCode: 401, headers, body: JSON.stringify({ error: 'token_expired' }) };
 
-    if (fitRes.status === 200 && fitRes.body.session && fitRes.body.session.length > 0) {
-      const sessions = fitRes.body.session.map(s => {
-        const start = new Date(parseInt(s.startTimeMillis));
-        const end = new Date(parseInt(s.endTimeMillis));
-        const fmtTime = t => t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        return {
-          id: s.id,
-          startTime: start.toISOString(),
-          endTime: end.toISOString(),
-          startLabel: fmtTime(start),
-          endLabel: fmtTime(end),
-          activityType: s.activityType,
-          activityName: getActivityName(s.activityType) || s.name || 'Workout',
-          duration: formatDuration(parseInt(s.endTimeMillis) - parseInt(s.startTimeMillis))
-        };
-      });
-      sessions.sort((a,b) => new Date(b.startTime) - new Date(a.startTime));
-      return { statusCode: 200, headers, body: JSON.stringify({ sessions, source: 'fit', newTokens }) };
+    if (res.status !== 200) {
+      return { statusCode: res.status, headers, body: JSON.stringify({
+        sessions: [],
+        error: res.body.error && res.body.error.message,
+        status: res.status,
+        newTokens
+      })};
     }
 
-    if (fitRes.status === 401) return { statusCode: 401, headers, body: JSON.stringify({ error: 'token_expired' }) };
+    const points = res.body.dataPoints || [];
+    if (points.length === 0) {
+      return { statusCode: 200, headers, body: JSON.stringify({ sessions: [], source: 'health', newTokens }) };
+    }
 
-    return { statusCode: 200, headers, body: JSON.stringify({
-      sessions: [],
-      fitStatus: fitRes.status,
-      fitError: fitRes.body.error && fitRes.body.error.message,
-      newTokens
-    })};
+    const sessions = points.map(p => {
+      const ex = p.exercise || {};
+      const interval = ex.interval || {};
+      const startIso = interval.startTime;
+      const endIso = interval.endTime;
+      const hrSummary = ex.heartRateSummary || {};
+
+      return {
+        id: p.name || startIso,
+        startTime: startIso,
+        endTime: endIso,
+        startLabel: fmtTime(startIso),
+        endLabel: fmtTime(endIso),
+        activityType: ex.activityType,
+        activityName: getActivityName(ex.activityType),
+        duration: formatDuration(startIso, endIso),
+        // Include HR summary if available in the exercise point itself
+        avgHR: hrSummary.averageHeartRate || null,
+        maxHR: hrSummary.maxHeartRate || null,
+        calories: ex.calories || null
+      };
+    }).filter(s => s.startTime); // remove any malformed points
+
+    sessions.sort((a,b) => new Date(b.startTime) - new Date(a.startTime));
+    return { statusCode: 200, headers, body: JSON.stringify({ sessions, source: 'health', newTokens }) };
   }
 
-  // ── HR ───────────────────────────────────────────────────────────────────────
+  // ── HR (called after session selected) ────────────────────────────────────
   if (action === 'hr') {
     if (!session_start || !session_end) return { statusCode: 400, headers, body: JSON.stringify({ error: 'missing window' }) };
 
-    const startNs = new Date(session_start).getTime() * 1000000;
-    const endNs = new Date(session_end).getTime() * 1000000;
-    const FIT = 'https://www.googleapis.com/fitness/v1/users/me';
+    // Extract date portion for civil_start_time filter
+    const startDate = session_start.substring(0, 10);
+    const filterStr = `heart_rate.interval.civil_start_time >= "${startDate}T00:00:00"`;
+    const hrRes = await get(`${BASE}/dataTypes/heart-rate/dataPoints?filter=${encodeURIComponent(filterStr)}`, accessToken);
 
-    // HR
-    const hrRes = await get(`${FIT}/dataSources/derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm/datasets/${startNs}-${endNs}`, accessToken);
     let avgHR = null, maxHR = null;
-    if (hrRes.status === 200 && hrRes.body.point && hrRes.body.point.length > 0) {
-      const vals = hrRes.body.point.map(p => p.value && p.value[0] && p.value[0].fpVal).filter(v => v && v > 30);
-      avgHR = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0) / vals.length) : null;
-      maxHR = vals.length ? Math.round(Math.max(...vals)) : null;
+
+    if (hrRes.status === 200 && hrRes.body.dataPoints && hrRes.body.dataPoints.length > 0) {
+      // Filter to session window
+      const filtered = hrRes.body.dataPoints.filter(p => {
+        const t = p.heartRate && p.heartRate.interval && p.heartRate.interval.startTime;
+        return t && t >= session_start && t <= session_end;
+      });
+      if (filtered.length > 0) {
+        const vals = filtered
+          .map(p => p.heartRate && p.heartRate.beatsPerMinute)
+          .filter(v => v && v > 30);
+        avgHR = vals.length ? Math.round(vals.reduce((a,b) => a+b, 0) / vals.length) : null;
+        maxHR = vals.length ? Math.round(Math.max(...vals)) : null;
+      }
     }
 
-    // Calories
-    const calRes = await get(`${FIT}/dataSources/derived:com.google.calories.expended:com.google.android.gms:merge_calories_expended/datasets/${startNs}-${endNs}`, accessToken);
-    let calories = null;
-    if (calRes.status === 200 && calRes.body.point) {
-      calories = Math.round(calRes.body.point.reduce((sum,p) => sum + ((p.value && p.value[0] && p.value[0].fpVal) || 0), 0)) || null;
-    }
-
-    return { statusCode: 200, headers, body: JSON.stringify({ avgHR, maxHR, calories, activeZoneMinutes: null, newTokens }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ avgHR, maxHR, calories: null, activeZoneMinutes: null, newTokens }) };
   }
 
   return { statusCode: 400, headers, body: JSON.stringify({ error: 'unknown_action' }) };
