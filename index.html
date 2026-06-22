@@ -99,14 +99,14 @@
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 18px 24px;
+    padding: 14px 16px;
     position: sticky;
     top: 0;
     z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 8px;
   }
 
   .header-left h1 {
@@ -125,7 +125,7 @@
     text-transform: uppercase;
   }
 
-  .header-controls { display: flex; align-items: center; gap: 10px; }
+  .header-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; overflow: hidden; }
 
   .icon-btn {
     background: var(--border);
@@ -141,7 +141,7 @@
   .icon-btn:hover { background: var(--accent); color: var(--accent-text); }
   .icon-btn:active { transform: scale(0.92); }
 
-  .week-nav { display: flex; align-items: center; gap: 8px; }
+  .week-nav { display: flex; align-items: center; gap: 4px; }
   .week-nav button {
     background: var(--border);
     border: none; color: var(--text);
@@ -597,10 +597,10 @@
 
   /* Google Health integration */
   .gh-connect-btn {
-    display: flex; align-items: center; gap: 7px;
+    display: flex; align-items: center; gap: 5px;
     background: var(--accent-soft); border: 1px solid var(--accent-dim);
-    border-radius: 8px; color: var(--accent); padding: 6px 12px;
-    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px;
+    border-radius: 8px; color: var(--accent); padding: 6px 9px;
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.3px;
     cursor: pointer; transition: all 0.15s; white-space: nowrap;
   }
   .gh-connect-btn:hover { background: var(--accent); color: var(--accent-text); }
@@ -817,7 +817,7 @@ const PROGRAM = {
 
 const PULLEY_EXERCISES = new Set([
   'Cable Chest Fly','Cable Lateral Raise (Full ROM)','Cable Tricep Overhead Extension',
-  'Pallof Press','Face Pull','Single Arm Rear Delt Cable','Bayesian Bicep Curl',
+  'Pallof Press','Face Pull','Bayesian Bicep Curl',
   'Kneeling Single Arm Cable Row + Rotation','Neutral Grip Lat Pulldown',
 ]);
 
@@ -835,12 +835,10 @@ const TIME_BASED_EXERCISES = new Set([
 
 // Plyometric exercises — log reps only, no weight
 const REPS_ONLY_EXERCISES = new Set([
-  'Kneeling → Jump → Deep Squat → Jump',
-  'Lateral Bound (Single Leg)',
-  'Single Leg Power Step-Up',
+  'Kneeling → Jump → Deep Squat',
+  'Lateral Bounds',
   'Ab Wheel Rollout',
   'Hanging Leg Raise',
-  'Burpees',
 ]);
 
 let currentWeek = 1;
