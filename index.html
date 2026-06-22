@@ -331,6 +331,66 @@
   .set-input:focus { outline: none; border-color: var(--accent); }
   .set-input.filled { border-color: var(--accent-dim); color: var(--accent); }
   .set-divider { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+  .time-input { width: 80px; }
+  .set-input.carryover::placeholder { color: var(--accent); opacity: 0.4; font-weight: 500; }
+
+  .recovery-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 12px; border-radius: 9px; cursor: pointer;
+    transition: background 0.15s; margin-bottom: 4px;
+  }
+  .recovery-item:hover { background: var(--card); }
+  .recovery-item.checked .recovery-name { color: var(--muted); text-decoration: line-through; }
+  .recovery-check {
+    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+    border: 1.5px solid var(--border); display: flex; align-items: center;
+    justify-content: center; font-size: 13px; color: var(--accent); margin-top: 1px;
+  }
+  .recovery-item.checked .recovery-check { background: var(--accent-soft); border-color: var(--accent-dim); }
+  .recovery-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .recovery-detail { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .recovery-note {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent);
+    opacity: 0.75; padding: 8px 12px; font-style: italic;
+  }
+  .deload-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none;
+  }
+  .deload-banner.active { border-color: var(--accent); background: var(--accent-soft); }
+  .deload-toggle {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 6px; border: 1px solid var(--accent-dim);
+    color: var(--accent);
+  }
+  .deload-banner.active .deload-toggle { background: var(--accent); color: var(--accent-text); }
+  .ex-icon-btn {
+    background: none; border: none; cursor: pointer; font-size: 12px;
+    color: var(--muted); padding: 0 3px; margin-left: 4px; opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+  .ex-icon-btn:hover { opacity: 1; }
+  .coach-note {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent);
+    background: var(--accent-soft); border-radius: 6px; padding: 5px 9px;
+    margin-top: 5px; display: inline-block; opacity: 0.9;
+  }
+  .swap-picker { max-height: 50vh; overflow-y: auto; }
+  .share-btn {
+    display: block; width: 100%; margin-top: 10px; padding: 11px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; color: var(--text-dim); font-family: 'DM Mono', monospace;
+    font-size: 12px; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s;
+  }
+  .share-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .share-ok { color: #4caf7a; font-family: 'DM Mono', monospace; font-size: 12px; text-align: center; padding: 10px; }
+  .share-options { display: flex; flex-direction: column; gap: 8px; }
+  .cmp-table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 12px; }
+  .cmp-table th { text-align: left; color: var(--muted); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 8px 6px; border-bottom: 1px solid var(--border); font-weight: 500; }
+  .cmp-table td { padding: 9px 6px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .cmp-table td:first-child { color: var(--muted); }
+  .cmp-up { color: #4caf7a; font-size: 9px; }
+  .cmp-down { color: #e57373; font-size: 9px; }
   .ghost-ref {
     font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
     opacity: 0.6; white-space: nowrap; margin-left: 2px;
@@ -628,6 +688,7 @@
     <button class="modal-btn primary" onclick="exportData()">↓ Export backup file</button>
     <button class="modal-btn" onclick="document.getElementById('importFile').click()">↑ Import backup file</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this.files[0])">
+    <button class="modal-btn" onclick="resetProgramStart()" style="opacity:0.6;font-size:11px">⟳ Reset program start date</button>
     <div class="modal-status" id="modalStatus"></div>
     <button class="modal-close" onclick="closeDataMenu()">Close</button>
   </div>
@@ -760,6 +821,28 @@ const PULLEY_EXERCISES = new Set([
   'Kneeling Single Arm Cable Row + Rotation','Neutral Grip Lat Pulldown',
 ]);
 
+// Isometric and hold exercises — log time in seconds, not reps
+const TIME_BASED_EXERCISES = new Set([
+  'Wall Sit + Toe Raise',
+  'Wall Sit + Ankle Raise',
+  'Copenhagen Plank Hold',
+  'Single Leg Lunge Hold on Toes',
+  'Plank',
+  'Dead Hang',
+  'Glute Bridge Iso Hold',
+  'Single Leg Hip Thrust with Hold',
+]);
+
+// Plyometric exercises — log reps only, no weight
+const REPS_ONLY_EXERCISES = new Set([
+  'Kneeling → Jump → Deep Squat → Jump',
+  'Lateral Bound (Single Leg)',
+  'Single Leg Power Step-Up',
+  'Ab Wheel Rollout',
+  'Hanging Leg Raise',
+  'Burpees',
+]);
+
 let currentWeek = 1;
 let currentDay = 0;
 let currentView = 'tracker';
@@ -804,6 +887,74 @@ function setDayCompleted(w,d){ localStorage.setItem(getDayCompletedKey(w,d),'1')
 function getSessionNoteKey(w,d){ return `alberto_w${w}_${d}_note`; }
 function getSessionNote(w,d){ return localStorage.getItem(getSessionNoteKey(w,d)) || ''; }
 function saveSessionNote(d,v){ localStorage.setItem(getSessionNoteKey(currentWeek,d),v); }
+
+// ── Deload mode ──────────────────────────────────────────────────────────────
+function isDeloadActive(w){ return localStorage.getItem(`alberto_w${w}_deload`) === '1'; }
+
+function resetProgramStart(){
+  if (!confirm('This resets week tracking to start from this Monday (week 1). Your logged data stays. Continue?')) return;
+  const monday = getCalendarMonday(new Date());
+  localStorage.setItem(getProgramStartKey(), monday.toISOString());
+  MAX_WEEKS = getMaxWeeks();
+  currentWeek = 1;
+  updateWeekLabel();
+  closeDataMenu();
+  render();
+}function toggleDeload(w){
+  const key = `alberto_w${w}_deload`;
+  if (localStorage.getItem(key) === '1') localStorage.removeItem(key);
+  else { localStorage.setItem(key, '1'); hapticTick(); }
+  render();
+}
+
+// ── Coaching notes (user-added, per exercise) ───────────────────────────────
+function coachNoteKey(d,e){ return `alberto_coachnote_${d}_${e}`; }
+function getCoachNote(d,e){ return localStorage.getItem(coachNoteKey(d,e)) || ''; }
+function saveCoachNote(d,e,v){
+  if (v && v.trim()) localStorage.setItem(coachNoteKey(d,e), v.trim());
+  else localStorage.removeItem(coachNoteKey(d,e));
+}
+function openNoteEditor(d, e){
+  const existing = getCoachNote(d, e);
+  const val = prompt('Your note for this exercise:', existing);
+  if (val !== null){ saveCoachNote(d, e, val); render(); }
+}
+
+// ── Exercise swap (per day/week only) ───────────────────────────────────────
+const SWAP_OPTIONS = [
+  'Goblet Squat','Bulgarian Split Squat','Romanian Deadlift','Leg Press','Walking Lunge',
+  'DB Shoulder Press','Arnold Press','Incline DB Press','Push-Up','Dips',
+  'Lat Pulldown','Seated Cable Row','Chest-Supported Row','Pull-Up','Inverted Row',
+  'DB Curl','Hammer Curl','Tricep Pushdown','Skull Crusher','Lateral Raise',
+  'Leg Curl','Leg Extension','Calf Raise','Hanging Leg Raise','Cable Crunch',
+  'KB Swing','Box Jump','Med Ball Slam','Farmer Carry','Plank',
+];
+function swapKey(w,d,e){ return `alberto_w${w}_${d}_swap_${e}`; }
+function getSwappedExercise(d, exOrig){
+  const swapName = localStorage.getItem(swapKey(currentWeek, d, exOrig.id));
+  if (!swapName) return exOrig;
+  return { ...exOrig, name: swapName, note: '(swapped)' };
+}
+let swapTarget = null;
+function openSwapMenu(d, exId){
+  swapTarget = { d, exId };
+  let html = `<div class="swap-picker"><div class="session-picker-label">Swap to (this week only)</div>`;
+  SWAP_OPTIONS.forEach(name => {
+    html += `<div class="session-option" onclick="doSwap('${name.replace(/'/g,"\\'")}')"><div class="session-option-name">${name}</div></div>`;
+  });
+  html += `<div class="session-option" onclick="clearSwap()" style="border-color:var(--accent-dim)"><div class="session-option-name" style="color:var(--accent)">↺ Reset to original</div></div></div>`;
+  document.getElementById('ghModalBody').innerHTML = html;
+  document.getElementById('ghModal').querySelector('.modal-title').textContent = 'Swap Exercise';
+  document.getElementById('ghModal').classList.add('open');
+}
+function doSwap(name){
+  if (swapTarget) localStorage.setItem(swapKey(currentWeek, swapTarget.d, swapTarget.exId), name);
+  closeGhModal(); render();
+}
+function clearSwap(){
+  if (swapTarget) localStorage.removeItem(swapKey(currentWeek, swapTarget.d, swapTarget.exId));
+  closeGhModal(); render();
+}
 
 function getSetCountKey(w,d,e){ return `alberto_w${w}_${d}_${e}_setcount`; }
 function getSetCount(w,d,e,def){ const s = localStorage.getItem(getSetCountKey(w,d,e)); return s ? parseInt(s) : def; }
@@ -899,7 +1050,7 @@ function setView(v){
 
 /* ---------- Week + summary ---------- */
 function countCompletedDays(w){ return DAYS.filter(d => { const day = PROGRAM[d]; if(!day||day.type==='rest'||day.type==='tennis') return false; return isDayCompleted(w,d); }).length; }
-function countTotalSessions(w){ return DAYS.filter(d => { const day = PROGRAM[d]; return day && !day.type; }).length; }
+function countTotalSessions(w){ return DAYS.filter(d => { const day = PROGRAM[d]; return day && (!day.type || day.type==='rowing'); }).length; }
 
 function renderWeekSummary(){
   const completed = countCompletedDays(currentWeek);
@@ -921,7 +1072,7 @@ function renderTabs(){
     btn.textContent = d;
     if (i === currentDay) btn.classList.add('active');
     if (day.type === 'rest') btn.classList.add('rest');
-    if (!day.type && isDayCompleted(currentWeek,d)) btn.classList.add('completed');
+    if ((!day.type || day.type==='rowing') && isDayCompleted(currentWeek,d)) btn.classList.add('completed');
     btn.onclick = () => { currentDay = i; render(); };
     c.appendChild(btn);
   });
@@ -934,30 +1085,37 @@ function renderDay(){
   const container = document.getElementById('dayContent');
 
   if (day.type === 'rowing'){ renderRowing(container, dayKey); return; }
-  if (day.type === 'rest'){
-    container.innerHTML = `<div class="rest-day"><h2>RECOVERY</h2><p>Mobility · Zone 2 · Locked in · Do not change</p></div>`; return;
-  }
+  if (day.type === 'rest'){ renderRecovery(container, dayKey); return; }
   if (day.type === 'tennis'){
     container.innerHTML = `<div class="tennis-day"><h2>🎾 TENNIS</h2><p>Fixed day · No lifting · Flag knee if it flares during play</p></div>`; return;
   }
 
   const completed = isDayCompleted(currentWeek, dayKey);
   const showDeload = currentWeek > 1 && currentWeek % 6 === 0;
+  const deloadOn = showDeload && isDeloadActive(currentWeek);
   let html = `<div class="day-header">
       <div class="day-title">${DAY_NAMES[currentDay]} — ${day.title}</div>
       <div class="day-subtitle">${day.subtitle}</div>
       ${day.note ? `<div class="day-note">${day.note}</div>` : ''}
     </div>
-    ${showDeload ? `<div class="deload-banner">🔄 Week ${currentWeek} — deload week. Reduce volume ~40%, keep intensity. Your body has earned it.</div>` : ''}`;
+    ${showDeload ? `<div class="deload-banner ${deloadOn?'active':''}" onclick="toggleDeload(${currentWeek})">
+      <span>🔄 Week ${currentWeek} — deload week${deloadOn?' · ACTIVE':''}</span>
+      <span class="deload-toggle">${deloadOn?'ON':'OFF'}</span>
+    </div>` : ''}`;
 
   day.blocks.forEach(block => {
     html += `<div class="block"><div class="block-header"><span class="block-label">${block.label}</span><span class="block-type">${block.type}</span></div>`;
-    block.exercises.forEach(ex => {
+    block.exercises.forEach(exOrig => {
+      const ex = getSwappedExercise(dayKey, exOrig);
       const supersetClass = ex.prefix === 'A' ? 'superset-a' : ex.prefix === 'B' ? 'superset-b' : '';
-      const setCount = getSetCount(currentWeek, dayKey, ex.id, ex.sets);
+      let setCount = getSetCount(currentWeek, dayKey, ex.id, ex.sets);
+      if (deloadOn) setCount = Math.max(2, setCount - 1); // deload: one less set, min 2
       const exUnit = getExUnit(dayKey, ex.id);
       const isPulley = PULLEY_EXERCISES.has(ex.name);
+      const isTimeBased = TIME_BASED_EXERCISES.has(ex.name);
+      const isRepsOnly = REPS_ONLY_EXERCISES.has(ex.name);
       const dp = getDp(ex.id);
+      const coachNote = getCoachNote(dayKey, ex.id);
 
       html += `<div class="exercise-row ${supersetClass}">
         <div>
@@ -965,44 +1123,80 @@ function renderDay(){
             ${ex.prefix ? `<span class="ex-prefix">${ex.prefix}</span>` : ''}
             ${ex.name}
             ${isPulley ? `<button class="dp-tag ${dp?'active':''}" onclick="toggleDp('${ex.id}')" title="Double pulley">dp</button>` : ''}
+            ${!completed ? `<button class="ex-icon-btn" onclick="openNoteEditor('${dayKey}','${ex.id}')" title="Add note">${coachNote?'📝':'ⓘ'}</button>` : (coachNote?`<span class="ex-icon-btn" style="cursor:default">📝</span>`:'')}
+            ${!completed ? `<button class="ex-icon-btn" onclick="openSwapMenu('${dayKey}','${exOrig.id}')" title="Swap exercise">⇄</button>` : ''}
           </div>
           <div class="ex-meta-row">
             <span class="ex-meta">${ex.sets} sets · ${ex.reps}</span>
           </div>
           ${ex.note ? `<div class="ex-note">${ex.note}</div>` : ''}
+          ${coachNote ? `<div class="coach-note">${coachNote}</div>` : ''}
         </div>
         <div class="ex-inputs">
           <div class="sets-header">
-            <div class="ex-unit-toggle">
-              <button class="ex-unit-btn ${exUnit==='kg'?'active':''}" onclick="setExUnit('${dayKey}','${ex.id}','kg')" ${completed?'disabled':''}>KG</button>
-              <button class="ex-unit-btn ${exUnit==='lbs'?'active':''}" onclick="setExUnit('${dayKey}','${ex.id}','lbs')" ${completed?'disabled':''}>LBS</button>
-            </div>
-            <span>REPS</span>
+            ${isTimeBased ? `
+              <span style="width:140px;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">SECONDS</span>
+            ` : isRepsOnly ? `
+              <span style="width:140px;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">REPS</span>
+            ` : `
+              <div class="ex-unit-toggle">
+                <button class="ex-unit-btn ${exUnit==='kg'?'active':''}" onclick="setExUnit('${dayKey}','${ex.id}','kg')" ${completed?'disabled':''}>KG</button>
+                <button class="ex-unit-btn ${exUnit==='lbs'?'active':''}" onclick="setExUnit('${dayKey}','${ex.id}','lbs')" ${completed?'disabled':''}>LBS</button>
+              </div>
+              <span>REPS</span>
+            `}
           </div>`;
       for (let s=0; s<setCount; s++){
         const w = loadValue(currentWeek, dayKey, ex.id, s, 'w');
         const r = loadValue(currentWeek, dayKey, ex.id, s, 'r');
-        // ghost: same set last week
-        let ghost = '';
+        // carryover: last week's same set, shown as faded placeholder
+        let pw = '', pr = '', prevFat = '';
         if (currentWeek > 1){
-          const pw = loadValue(currentWeek-1, dayKey, ex.id, s, 'w');
-          const pr = loadValue(currentWeek-1, dayKey, ex.id, s, 'r');
-          if (pw || pr){
-            const prevFat = getSetFatigue(currentWeek-1, dayKey, ex.id, s);
-            ghost = `<span class="ghost-ref" title="Last week">↳ ${pw||'?'}${pr?'×'+pr:''}${prevFat?' '+prevFat:''}</span>`;
-          }
+          pw = loadValue(currentWeek-1, dayKey, ex.id, s, 'w');
+          pr = loadValue(currentWeek-1, dayKey, ex.id, s, 'r');
+          prevFat = getSetFatigue(currentWeek-1, dayKey, ex.id, s);
         }
+        // tiny last-week tag with emoji (shown after inputs)
+        const ghost = (pw || pr) ? `<span class="ghost-ref" title="Last week">↳ ${pw||'?'}${pr?'×'+pr:''}${prevFat?' '+prevFat:''}</span>` : '';
+
         const setFat = getSetFatigue(currentWeek, dayKey, ex.id, s);
-        const isPR = w && isCurrentWeightPR(dayKey, ex.id, parseFloat(w));
-        html += `<div class="set-row">
-          <span class="set-label">${s+1}</span>
-          <input type="number" class="set-input ${w?'filled':''}" placeholder="${exUnit}" value="${w}" onchange="saveVal('${dayKey}','${ex.id}',${s},'w',this.value); this.classList.toggle('filled', !!this.value)" ${completed?'disabled':''}>
-          <span class="set-divider">×</span>
-          <input type="number" class="set-input ${r?'filled':''}" placeholder="reps" value="${r}" onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value)" ${completed?'disabled':''}>
-          <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
-          ${isPR ? `<span class="pr-badge" title="Personal Record">PR</span>` : ''}
-          ${ghost}
-        </div>`;
+        const isPR = w && !isTimeBased && !isRepsOnly && isCurrentWeightPR(dayKey, ex.id, parseFloat(w));
+
+        if (isTimeBased) {
+          const rPlaceholder = pr ? pr : 'sec';
+          html += `<div class="set-row">
+            <span class="set-label">${s+1}</span>
+            <input type="number" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+              onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              ${completed?'disabled':''}>
+            <span class="set-divider" style="opacity:0.4">s</span>
+            <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
+          </div>`;
+        } else if (isRepsOnly) {
+          const rPlaceholder = pr ? pr : 'reps';
+          html += `<div class="set-row">
+            <span class="set-label">${s+1}</span>
+            <input type="number" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+              onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              ${completed?'disabled':''}>
+            <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
+          </div>`;
+        } else {
+          const wPlaceholder = pw ? pw : exUnit;
+          const rPlaceholder = pr ? pr : 'reps';
+          html += `<div class="set-row">
+            <span class="set-label">${s+1}</span>
+            <input type="number" class="set-input ${w?'filled':''} ${!w&&pw?'carryover':''}" placeholder="${wPlaceholder}" value="${w}"
+              onchange="saveVal('${dayKey}','${ex.id}',${s},'w',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              ${completed?'disabled':''}>
+            <span class="set-divider">×</span>
+            <input type="number" class="set-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+              onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              ${completed?'disabled':''}>
+            <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
+            ${isPR ? `<span class="pr-badge" title="Personal Record">PR</span>` : ''}
+          </div>`;
+        }
       }
       if (!completed) html += `<button class="add-set-btn" onclick="addSet('${dayKey}','${ex.id}',${setCount})">+ set</button>`;
       html += `</div></div>`;
@@ -1019,9 +1213,81 @@ function renderDay(){
   html += `<button class="complete-btn ${completed?'done':''}" onclick="completeDay('${dayKey}')" ${completed?'disabled':''}>${completed?'✓ SESSION LOGGED':'MARK SESSION COMPLETE'}</button>`;
   if (completed){
     html += `<div style="text-align:center;"><button class="edit-link" onclick="unlockDay('${dayKey}')">edit this session</button></div>`;
+    html += `<button class="share-btn" onclick="openShareMenu('${dayKey}')">⤴ Share session</button>`;
   }
   // Google Health pull button — always visible if connected
   html += ghPullSection(dayKey, currentWeek);
+  container.innerHTML = html;
+}
+
+const RECOVERY_ROUTINE = [
+  { title: 'Block 1 — Tissue + Prep', time: '5–7 min', note: 'Keep this light. Just wake things up.', items: [
+    { name: 'Foam Roll Quads', detail: '45–60s each' },
+    { name: 'Foam Roll Adductors', detail: '45–60s' },
+    { name: 'T-Spine Extensions over Roller', detail: '8 reps' },
+    { name: 'Light Band Pull-Aparts', detail: '15 reps' },
+  ]},
+  { title: 'Block 2 — Hips & Adductors', time: '10–12 min', note: '', items: [
+    { name: 'KB Shinbox Rotation', detail: '2 × 6–8 slow reps · Move with control, don\u2019t rush' },
+    { name: 'Cossack Rock-Back', detail: '2 × 6/side · Sit into hip, not knee' },
+    { name: 'Couch Stretch', detail: '2 × 45s/side · Slow breathing' },
+  ]},
+  { title: 'Block 3 — Thoracic + Shoulders', time: '8–10 min', note: 'Optional if shoulders feel tight: Band external rotations 2 × 12', items: [
+    { name: 'Open Books', detail: '2 × 6–8/side' },
+    { name: 'KB Windmill (light)', detail: '2–3 × 5/side · Slow 3s, pause at bottom, long exhale' },
+    { name: 'Dead Hang', detail: '2 × 20–40s · Relax neck and shoulders' },
+    { name: 'Wall Slides', detail: '2 × 8–10 slow reps' },
+  ]},
+  { title: 'Block 4 — Posterior Chain Activation', time: '6–8 min', note: '', items: [
+    { name: 'Glute Bridge Iso Hold', detail: '2 × 30–40s' },
+    { name: 'Hamstring Floss (lying or banded)', detail: '2 × 8/side · Slow and controlled' },
+  ]},
+  { title: 'Block 5 — Downregulation', time: '5–8 min', note: 'This is what actually drives recovery.', items: [
+    { name: '90/90 Breathing (feet on wall)', detail: '3–5 min · Inhale 4s nose, long exhale 6–8s, feel ribs drop' },
+  ]},
+];
+
+function recoveryCheckKey(w, blockIdx, itemIdx){ return `alberto_w${w}_recovery_b${blockIdx}_i${itemIdx}`; }
+function isRecoveryChecked(w, b, i){ return localStorage.getItem(recoveryCheckKey(w,b,i)) === '1'; }
+function toggleRecoveryItem(b, i){
+  const key = recoveryCheckKey(currentWeek, b, i);
+  if (localStorage.getItem(key) === '1') localStorage.removeItem(key);
+  else { localStorage.setItem(key, '1'); hapticTick(); }
+  render();
+}
+
+function renderRecovery(container, dayKey){
+  let html = `<div class="day-header">
+    <div class="day-title">Sunday — Recovery & Mobility</div>
+    <div class="day-subtitle">~35–40 min · Locked in · Tap items to check off</div>
+  </div>`;
+
+  RECOVERY_ROUTINE.forEach((block, bi) => {
+    html += `<div class="block">
+      <div class="block-header">
+        <span class="block-label">${block.title}</span>
+        <span class="block-type">${block.time}</span>
+      </div>`;
+    block.items.forEach((item, ii) => {
+      const checked = isRecoveryChecked(currentWeek, bi, ii);
+      html += `<div class="recovery-item ${checked?'checked':''}" onclick="toggleRecoveryItem(${bi},${ii})">
+        <div class="recovery-check">${checked?'✓':''}</div>
+        <div>
+          <div class="recovery-name">${item.name}</div>
+          <div class="recovery-detail">${item.detail}</div>
+        </div>
+      </div>`;
+    });
+    if (block.note) html += `<div class="recovery-note">${block.note}</div>`;
+    html += `</div>`;
+  });
+
+  const note = getSessionNote(currentWeek, 'SUN');
+  html += `<div class="session-notes">
+    <div class="notes-label">Session notes</div>
+    <textarea class="notes-input" placeholder="How did recovery feel?" onchange="saveSessionNote('SUN',this.value)">${note}</textarea>
+  </div>`;
+
   container.innerHTML = html;
 }
 
@@ -1071,7 +1337,9 @@ function saveVal(d,e,s,f,v){
   if (f === 'w' && v) checkAndSetPR(d,e,parseFloat(v));
 }
 function addSet(d,e,c){ setSetCount(currentWeek,d,e,c+1); render(); }
-function completeDay(d){ setDayCompleted(currentWeek,d); render(); }
+function hapticTick(){ if (navigator.vibrate) navigator.vibrate(10); }function hapticSuccess(){ if (navigator.vibrate) navigator.vibrate([15, 40, 25]); }
+
+function completeDay(d){ setDayCompleted(currentWeek,d); hapticSuccess(); render(); }
 function unlockDay(d){ localStorage.removeItem(getDayCompletedKey(currentWeek, d)); render(); }
 function changeWeek(dir){
   const n = currentWeek + dir;
@@ -1214,8 +1482,35 @@ function renderProgress(){
 
     ${series.length === 1 ? renderHistory(series[0].data, series[0].unit) : ''}
 
+    ${series.length === 1 ? renderWeekComparison(series[0]) : ''}
+
     ${renderRowingProgress()}
   `;
+}
+
+function renderWeekComparison(s){
+  const rows = s.data.filter(d => !d.empty);
+  if (rows.length < 1) return '';
+  let html = `<div class="chart-card">
+    <div class="chart-title">${s.name} — Week by Week</div>
+    <table class="cmp-table">
+      <thead><tr><th>Wk</th><th>Top Set</th><th>Volume</th><th>Est 1RM</th></tr></thead>
+      <tbody>`;
+  let prevTop = null;
+  rows.forEach(d => {
+    const top = d.weight ? `${d.weight}${s.unit}×${d.reps}` : '—';
+    const vol = d.volume ? d.volume.toLocaleString() : '—';
+    const e1rm = d.e1rm ? Math.round(d.e1rm)+s.unit : '—';
+    let trend = '';
+    if (prevTop != null && d.weight){
+      if (d.weight > prevTop) trend = '<span class="cmp-up">▲</span>';
+      else if (d.weight < prevTop) trend = '<span class="cmp-down">▼</span>';
+    }
+    if (d.weight) prevTop = d.weight;
+    html += `<tr><td>${d.week}</td><td>${top} ${trend}</td><td>${vol}</td><td>${e1rm}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
 }
 
 function addProgressEx(key){ if(key && !progressSelected.includes(key)){ progressSelected.push(key); renderProgress(); } }
@@ -1671,16 +1966,198 @@ async function runGhDebug(){
 
 function closeGhModal(){
   document.getElementById('ghModal').classList.remove('open');
+  document.getElementById('ghModal').querySelector('.modal-title').textContent = 'Pull Health Data';
   ghCurrentDay = null;
+  swapTarget = null;
+}
+
+// ── Share session ────────────────────────────────────────────────────────────
+function buildSessionSummary(dayKey){
+  const day = PROGRAM[dayKey];
+  if (!day || !day.blocks) return { text: '', lines: [] };
+  const dayName = DAY_NAMES[DAYS.indexOf(dayKey)] || dayKey;
+  const lines = [];
+  let prCount = 0;
+  day.blocks.forEach(block => {
+    block.exercises.forEach(exOrig => {
+      const ex = getSwappedExercise(dayKey, exOrig);
+      const setCount = getSetCount(currentWeek, dayKey, ex.id, ex.sets);
+      const isTimeBased = TIME_BASED_EXERCISES.has(ex.name);
+      const sets = [];
+      for (let s=0; s<setCount; s++){
+        const w = loadValue(currentWeek, dayKey, ex.id, s, 'w');
+        const r = loadValue(currentWeek, dayKey, ex.id, s, 'r');
+        if (isTimeBased && r) sets.push(`${r}s`);
+        else if (w || r) sets.push(`${w||'?'}${r?'×'+r:''}`);
+      }
+      if (sets.length){
+        const unit = getExUnit(dayKey, ex.id);
+        lines.push({ name: ex.name, detail: sets.join(', ') + (isTimeBased?'':` ${unit}`) });
+      }
+    });
+  });
+  const note = getSessionNote(currentWeek, dayKey);
+  let text = `🏋️ ${dayName} — ${day.title}\nWeek ${currentWeek}\n\n`;
+  lines.forEach(l => { text += `• ${l.name}: ${l.detail}\n`; });
+  if (note) text += `\n📝 ${note}`;
+  text += `\n\n— via Alberto Tracker`;
+  return { text, lines, dayName, title: day.title, note };
+}
+
+function openShareMenu(dayKey){
+  const summary = buildSessionSummary(dayKey);
+  if (!summary.lines.length){ alert('No sets logged to share.'); return; }
+  shareCurrentDay = dayKey;
+  let html = `<div class="share-options">
+    <div class="session-picker-label">Share as</div>
+    <button class="modal-btn primary" onclick="shareAsText('${dayKey}')">📋 Copy as text</button>
+    <button class="modal-btn" onclick="shareAsImage('${dayKey}')">🖼️ Generate image</button>
+    <div id="shareResult"></div>
+  </div>`;
+  document.getElementById('ghModalBody').innerHTML = html;
+  document.getElementById('ghModal').querySelector('.modal-title').textContent = 'Share Session';
+  document.getElementById('ghModal').classList.add('open');
+}
+let shareCurrentDay = null;
+
+async function shareAsText(dayKey){
+  const summary = buildSessionSummary(dayKey);
+  try {
+    if (navigator.share){
+      await navigator.share({ text: summary.text });
+    } else {
+      await navigator.clipboard.writeText(summary.text);
+      document.getElementById('shareResult').innerHTML = '<div class="share-ok">✓ Copied to clipboard</div>';
+    }
+  } catch(e){
+    // fallback: show text in a selectable box
+    document.getElementById('shareResult').innerHTML = `<textarea class="notes-input" style="height:160px" readonly>${summary.text}</textarea>`;
+  }
+}
+
+function shareAsImage(dayKey){
+  const summary = buildSessionSummary(dayKey);
+  const scale = 2;
+  const W = 540, padding = 40;
+  const lineH = 30;
+  const headerH = 130;
+  const noteH = summary.note ? 60 : 0;
+  const H = headerH + summary.lines.length * lineH + noteH + 60;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * scale; canvas.height = H * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  // bg
+  ctx.fillStyle = '#0d0f17'; ctx.fillRect(0,0,W,H);
+  // accent bar
+  ctx.fillStyle = '#a78bfa'; ctx.fillRect(0,0,W,6);
+
+  // header
+  ctx.fillStyle = '#a78bfa';
+  ctx.font = 'bold 32px Arial';
+  ctx.fillText(summary.dayName.toUpperCase(), padding, 56);
+  ctx.fillStyle = '#e8e9f0';
+  ctx.font = '18px Arial';
+  ctx.fillText(summary.title, padding, 84);
+  ctx.fillStyle = '#6b7090';
+  ctx.font = '14px Arial';
+  ctx.fillText(`WEEK ${currentWeek}`, padding, 108);
+
+  // divider
+  ctx.strokeStyle = '#252a3a'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padding, headerH-8); ctx.lineTo(W-padding, headerH-8); ctx.stroke();
+
+  // exercises
+  let y = headerH + 20;
+  ctx.textBaseline = 'alphabetic';
+  summary.lines.forEach(l => {
+    ctx.fillStyle = '#e8e9f0';
+    ctx.font = 'bold 15px Arial';
+    ctx.fillText(l.name, padding, y);
+    ctx.fillStyle = '#a78bfa';
+    ctx.font = '14px monospace';
+    const tw = ctx.measureText(l.detail).width;
+    ctx.fillText(l.detail, W - padding - tw, y);
+    y += lineH;
+  });
+
+  if (summary.note){
+    y += 10;
+    ctx.fillStyle = '#6b7090';
+    ctx.font = 'italic 13px Arial';
+    const words = summary.note.split(' ');
+    let line = '📝 ';
+    words.forEach(w => {
+      if (ctx.measureText(line + w).width > W - padding*2){ ctx.fillText(line, padding, y); y += 20; line = ''; }
+      line += w + ' ';
+    });
+    ctx.fillText(line, padding, y);
+  }
+
+  // footer
+  ctx.fillStyle = '#454a5f';
+  ctx.font = '11px monospace';
+  ctx.fillText('ALBERTO — TRACKER', padding, H - 24);
+
+  canvas.toBlob(async (blob) => {
+    const url = URL.createObjectURL(blob);
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'session.png', {type:'image/png'})] })){
+        await navigator.share({ files: [new File([blob], 'session.png', {type:'image/png'})] });
+      } else {
+        document.getElementById('shareResult').innerHTML = `<img src="${url}" style="width:100%;border-radius:10px;margin-top:10px"/><a href="${url}" download="session.png" class="modal-btn" style="display:block;margin-top:8px;text-align:center;text-decoration:none">↓ Download image</a>`;
+      }
+    } catch(e){
+      document.getElementById('shareResult').innerHTML = `<img src="${url}" style="width:100%;border-radius:10px;margin-top:10px"/>`;
+    }
+  }, 'image/png');
+}
+
+// ── Auto week calculation ─────────────────────────────────────────────────────
+// Stores the Monday of week 1. Each Monday the week auto-advances.
+function getProgramStartKey(){ return 'alberto_program_start'; }
+
+function getCalendarMonday(date){
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun, 1=Mon...
+  const diff = (day === 0) ? -6 : 1 - day; // adjust to Monday
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function getAutoWeek(){
+  const stored = localStorage.getItem(getProgramStartKey());
+  const todayMonday = getCalendarMonday(new Date());
+  if (!stored){
+    // First ever open — store this Monday as week 1 start
+    localStorage.setItem(getProgramStartKey(), todayMonday.toISOString());
+    return 1;
+  }
+  const startMonday = new Date(stored);
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const weeksElapsed = Math.floor((todayMonday - startMonday) / msPerWeek);
+  return Math.max(1, weeksElapsed + 1);
 }
 
 // init
 const today = new Date().getDay();
 const dayMap = [6,0,1,2,3,4,5];
 currentDay = dayMap[today];
+
+// Set week automatically from calendar — still allow manual override
+const autoWeek = getAutoWeek();
+if (autoWeek > MAX_WEEKS){
+  MAX_WEEKS = autoWeek;
+  setMaxWeeks(MAX_WEEKS);
+}
+currentWeek = autoWeek;
+
 updateThemeBtn();
 updateWeekLabel();
-handleGhCallback();   // handle OAuth redirect if returning from Google
+handleGhCallback();
 updateGhBtn();
 render();
 </script>
