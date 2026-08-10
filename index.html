@@ -468,6 +468,12 @@
     font-family: 'DM Mono', monospace; transition: all 0.15s; width: 100%; margin-top: 2px;
   }
   .add-set-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .remove-set-btn {
+    background: none; border: none; color: var(--muted); font-size: 18px;
+    cursor: pointer; padding: 0 2px; line-height: 1; opacity: 0.4;
+    transition: opacity 0.15s, color 0.15s; flex-shrink: 0;
+  }
+  .remove-set-btn:hover { opacity: 1; color: #e57373; }
 
   .complete-btn {
     display: block; width: 100%; padding: 14px;
@@ -694,7 +700,7 @@
 const DAYS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
-const PROGRAM = {
+const PROGRAM_V1 = {
   MON: {
     title: 'Full Body 1 — Power & Lower',
     subtitle: 'Main Gym · ~55 min · Explosive anchor · Trap Bar',
@@ -717,7 +723,7 @@ const PROGRAM = {
       ]},
       { label: 'BLOCK E', type: 'Superset: Core + Isometric', exercises: [
         { id: 'mon_e1', prefix: 'A', name: 'Ab Wheel Rollout', sets: 3, reps: '8–10', note: 'Full extension. Don\u2019t let lower back sag.' },
-        { id: 'mon_e2', prefix: 'B', name: 'Wall Sit + Toe Raise', sets: 3, reps: '40s', note: 'Isometric lower. Legs work while core recovers.' },
+        { id: 'mon_e2', prefix: 'B', name: 'Single Leg Wall Sit', sets: 3, reps: '30–40s/side', note: 'Isometric. Single leg — addresses asymmetry and tennis carry-over.' },
       ]},
     ]
   },
@@ -802,6 +808,121 @@ const PROGRAM = {
   SUN: { type: 'rest' }
 };
 
+// ═══ PROGRAM V2 — redesigned block (KB flows, essential, 45–50 min) ═══
+// Active from NEW_PROGRAM_WEEK onward. Earlier weeks keep V1 for clean history.
+const NEW_PROGRAM_WEEK = 9;
+
+const PROGRAM_V2 = {
+  MON: {
+    title: 'Full Body 1 — Power & Strength',
+    subtitle: 'Main Gym · ~50 min · Plyos first · Landmine anchor',
+    note: 'Plyos while CNS is fresh. Landmine hinge — push the floor away, lower back stays neutral.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Plyometrics — Superset', exercises: [
+        { id: 'mon_a1', prefix: 'A', name: 'Kneeling → Jump → Deep Squat', sets: 3, reps: '3', note: 'Full reset between reps. Explosive intent.' },
+        { id: 'mon_a2', prefix: 'B', name: 'Lateral Bounds', sets: 3, reps: '6/side', note: 'Stick the landing. Ball optional.' },
+      ]},
+      { label: 'BLOCK B', type: 'Strength Anchor — Standalone', exercises: [
+        { id: 'mon_b2', prefix: '', name: 'Landmine Deadlift', sets: 4, reps: '5', note: 'Explosive off the floor. Hinge, not squat. Progressive overload anchor.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: Push + Isometric', exercises: [
+        { id: 'mon_c1', prefix: 'A', name: 'Landmine Shoulder Press', sets: 3, reps: '8/side', note: 'Unilateral vertical push. Core stability demand.' },
+        { id: 'mon_e2', prefix: 'B', name: 'Single Leg Wall Sit', sets: 3, reps: '30–40s/side', note: 'Isometric. Addresses asymmetry.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Pull + Isometric', exercises: [
+        { id: 'mon_d1', prefix: 'A', name: 'Weighted Chin-Ups', sets: 3, reps: '5–6', note: '12–16kg. Full hang at bottom.' },
+        { id: 'mon_c2', prefix: 'B', name: 'Single Leg Hip Thrust with Hold', sets: 3, reps: '8/side', note: 'Pause 2s at top. Doesn\u2019t compete with chin-ups.' },
+      ]},
+      { label: 'BLOCK E', type: 'Superset: KB Flow + Core', exercises: [
+        { id: 'mon_d2', prefix: 'A', name: 'KB Halo', sets: 3, reps: '8/side', note: 'Shoulder mobility and core. Low fatigue finisher.' },
+        { id: 'mon_e1', prefix: 'B', name: 'Ab Wheel Rollout', sets: 3, reps: '8–10', note: 'Full extension. Don\u2019t let lower back sag.' },
+      ]},
+    ]
+  },
+  TUE: {
+    title: 'Full Body 2 — KB Complexes & Push',
+    subtitle: 'Main Gym · ~50 min · DB Bench anchor',
+    note: 'Dynamic and flowing. One heavy anchor, KB complexes, dips to finish strong.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Strength Anchor — Standalone', exercises: [
+        { id: 'tue_a1', prefix: '', name: 'DB Bench Press', sets: 4, reps: '6–8', note: 'Heavy anchor. Full focus. No superset.' },
+      ]},
+      { label: 'BLOCK B', type: 'Superset: Vertical Pull + Isometric', exercises: [
+        { id: 'tue_b1', prefix: 'A', name: 'Neutral Grip Lat Pulldown', sets: 3, reps: '8–10', note: 'Vertical pull. No grip competition with the isometric.' },
+        { id: 'tue_c2', prefix: 'B', name: 'Single Leg Lunge Hold on Toes', sets: 3, reps: '35s/side', note: 'Stability isometric. Weighted from week 3.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: KB Complex + Obliques', exercises: [
+        { id: 'tue_c3', prefix: 'A', name: 'KB Curl → Front Press → Overhead Tricep', sets: 3, reps: '8/side', note: 'Full flow. Forearms work together, not against a pull.' },
+        { id: 'tue_c4', prefix: 'B', name: 'KB Kneeling Oblique Shift', sets: 3, reps: '8/side', note: 'Kneeling, shift KB laterally. Oblique focus.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Chest + Shoulder Isolation', exercises: [
+        { id: 'tue_c1', prefix: 'A', name: 'Cable Chest Fly', sets: 3, reps: '12–15', note: 'Stretch focused. Both cables — easy transition.' },
+        { id: 'tue_d1', prefix: 'B', name: 'Cable Lateral Raise (Full ROM)', sets: 3, reps: '12–15', note: 'Slow and controlled. Full range.' },
+      ]},
+      { label: 'BLOCK E', type: 'Push Finisher — Standalone', exercises: [
+        { id: 'tue_e3', prefix: '', name: 'Weighted Dips', sets: 3, reps: '6–8', note: 'Standalone — go in fresh, push the weight properly.' },
+      ]},
+    ]
+  },
+  WED: { type: 'rowing', title: 'VO2 Max', subtitle: 'Main Gym · ~40 min · 4x4 Rowing Intervals' },
+  THU: {
+    title: 'Full Body 3 — Athletic & Small Muscles',
+    subtitle: 'Main Gym · ~50 min · Barbell Row anchor',
+    note: 'Day after rowing — quality movement over heavy load. Lateral, rotational, injury-proofing work.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Horizontal Pull — Standalone', exercises: [
+        { id: 'thu_a1', prefix: '', name: 'Barbell Row', sets: 3, reps: '6–8', note: 'Early while fresh. Core braced. No lower back rounding.' },
+      ]},
+      { label: 'BLOCK B', type: 'Superset: KB Complex + Lateral', exercises: [
+        { id: 'thu_c1', prefix: 'A', name: 'KB Swing → Clean → Press (Single Arm)', sets: 3, reps: '5/side', note: 'Athletic flow. Power and conditioning.' },
+        { id: 'thu_b2', prefix: 'B', name: 'Slider Side Lunge with KB', sets: 3, reps: '8/side', note: 'Lateral lower. Slow slide, drive through heel.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: Rotational + Stability', exercises: [
+        { id: 'thu_d1', prefix: 'A', name: 'KB Cossack Squat + Rotation', sets: 3, reps: '8/side', note: 'Lateral mobility. Rotational power. Tennis carry-over.' },
+        { id: 'thu_c2', prefix: 'B', name: 'Copenhagen Plank Hold', sets: 3, reps: '35s/side', note: 'Core and adductor. Knee health.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Small Muscles', exercises: [
+        { id: 'thu_d3', prefix: 'A', name: 'Face Pull', sets: 3, reps: '15', note: 'Rear delt + rotator cuff. 2x/week is earned for tennis.' },
+        { id: 'thu_d4', prefix: 'B', name: 'Calf Raise (Weighted)', sets: 3, reps: '15', note: 'Slow tempo. Pause at stretch and top.' },
+      ]},
+      { label: 'BLOCK E', type: 'Superset: Core + Hamstring', exercises: [
+        { id: 'thu_e1', prefix: 'A', name: 'Hanging Leg Raise', sets: 3, reps: '10–12', note: 'Full ROM. Control the descent.' },
+        { id: 'thu_e3', prefix: 'B', name: 'Nordic Curl', sets: 3, reps: '4–6', note: 'Eccentric hamstring. Best re-tear insurance there is. Control down.' },
+      ]},
+    ]
+  },
+  FRI: { type: 'tennis' },
+  SAT: {
+    title: 'Full Body 4 — Pull, KB & Rotational',
+    subtitle: 'Main Gym · ~50 min · Weighted Pull-Ups anchor · 24kg belt',
+    note: '⚑ Comes after Friday tennis. If match was long or intense, drop Block E. Never cut Block A or B.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Strength Anchor — Standalone', exercises: [
+        { id: 'sat_a1', prefix: '', name: 'Weighted Pull-Ups', sets: 4, reps: '4–6', note: '24kg belt. Full hang, chin over bar. King of the session.' },
+      ]},
+      { label: 'BLOCK B', type: 'Superset: Squat + Isometric', exercises: [
+        { id: 'sat_b1', prefix: 'A', name: 'Barbell Squat', sets: 3, reps: '6–8', note: 'Lower anchor. Add a rep or 5 lbs vs last week.' },
+        { id: 'sat_b2', prefix: 'B', name: 'Wall Sit + Ankle Raise', sets: 3, reps: '40s', note: 'Isometric. Lower active while upper recovers.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: KB Skill + Rotational Pull', exercises: [
+        { id: 'sat_c3', prefix: 'A', name: 'KB Turkish Get-Up (Floor Phase)', sets: 3, reps: '3/side', note: 'Skill work. Slow, controlled. Press up, hips up.' },
+        { id: 'sat_c1', prefix: 'B', name: 'Kneeling Single Arm Cable Row + Rotation', sets: 3, reps: '10/side', note: 'Athletic pull. Anti-rotation demand.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Push + Rotational Press', exercises: [
+        { id: 'sat_d3', prefix: 'A', name: 'Weighted Dips', sets: 3, reps: '6–8', note: 'Push balance to pull-ups. Slight forward lean.' },
+        { id: 'sat_d4', prefix: 'B', name: 'Landmine Rotational Press', sets: 3, reps: '8/side', note: 'Rotational push. Direct serve carry-over.' },
+      ]},
+      { label: 'BLOCK E', type: 'Superset: Rear Delt + Core', exercises: [
+        { id: 'sat_d1', prefix: 'A', name: 'Face Pull', sets: 3, reps: '12–15', note: 'Rotator cuff. Post-tennis essential.' },
+        { id: 'sat_d2', prefix: 'B', name: 'Plank', sets: 3, reps: '45–60s', note: 'Core finisher.' },
+      ]},
+    ]
+  },
+  SUN: { type: 'rest' }
+};
+
+function getProgram(w){ return w >= NEW_PROGRAM_WEEK ? PROGRAM_V2 : PROGRAM_V1; }
+
 const PULLEY_EXERCISES = new Set([
   'Cable Chest Fly','Cable Lateral Raise (Full ROM)','Cable Tricep Overhead Extension',
   'Pallof Press','Face Pull','Bayesian Bicep Curl',
@@ -810,22 +931,51 @@ const PULLEY_EXERCISES = new Set([
 
 // Isometric and hold exercises — log time in seconds, not reps
 const TIME_BASED_EXERCISES = new Set([
-  'Wall Sit + Toe Raise',
+  'Single Leg Wall Sit',
   'Wall Sit + Ankle Raise',
   'Copenhagen Plank Hold',
   'Single Leg Lunge Hold on Toes',
   'Plank',
   'Dead Hang',
   'Glute Bridge Iso Hold',
-  'Single Leg Hip Thrust with Hold',
 ]);
 
 // Plyometric exercises — log reps only, no weight
 const REPS_ONLY_EXERCISES = new Set([
   'Kneeling → Jump → Deep Squat',
-  'Lateral Bounds',
   'Ab Wheel Rollout',
   'Hanging Leg Raise',
+  'Nordic Curl',
+]);
+
+// Weighted isometric holds — log weight + seconds
+const WEIGHT_AND_TIME_EXERCISES = new Set([
+  'Single Leg Hip Thrust with Hold',
+  'Single Leg Lunge Hold on Toes',
+]);
+
+// ── Week 3 program changes ────────────────────────────────────────────────────
+// Weeks 1–2 use old definitions. Week 3+ uses current PROGRAM definitions.
+const CHANGE_WEEK = 3;
+
+// Pre-week-3 display overrides (name/reps/note only — data key stays same)
+const PRE_W3_EXERCISE = {
+  'mon_e2': { name: 'Wall Sit + Toe Raise', reps: '40s', note: 'Isometric lower. Legs work while core recovers.' },
+};
+
+// Pre-week-3 input types
+const PRE_W3_TIME_BASED = new Set([
+  'Wall Sit + Toe Raise',
+  'Wall Sit + Ankle Raise',
+  'Copenhagen Plank Hold',
+  'Single Leg Lunge Hold on Toes',
+  'Single Leg Hip Thrust with Hold',
+  'Plank', 'Dead Hang', 'Glute Bridge Iso Hold',
+]);
+const PRE_W3_REPS_ONLY = new Set([
+  'Kneeling → Jump → Deep Squat',
+  'Lateral Bounds',
+  'Ab Wheel Rollout', 'Hanging Leg Raise',
 ]);
 
 let currentWeek = 1;
@@ -853,9 +1003,14 @@ function cycleSetFatigue(d,e,s){
   render();
 }
 
-const dpState = {};
-function getDp(e){ return dpState[e] || false; }
-function toggleDp(e){ dpState[e] = !dpState[e]; render(); }
+function getDpKey(w,e){ return `alberto_w${w}_dp_${e}`; }
+function getDp(e){ return localStorage.getItem(getDpKey(currentWeek,e)) === '1'; }
+function toggleDp(e){
+  const key = getDpKey(currentWeek,e);
+  if (localStorage.getItem(key) === '1') localStorage.removeItem(key);
+  else localStorage.setItem(key,'1');
+  render();
+}
 
 function getExUnitKey(d,e){ return `alberto_${d}_${e}_unit`; }
 function getExUnit(d,e){ return localStorage.getItem(getExUnitKey(d,e)) || 'kg'; }
@@ -1034,8 +1189,8 @@ function setView(v){
 }
 
 /* ---------- Week + summary ---------- */
-function countCompletedDays(w){ return DAYS.filter(d => { const day = PROGRAM[d]; if(!day||day.type==='rest'||day.type==='tennis') return false; return isDayCompleted(w,d); }).length; }
-function countTotalSessions(w){ return DAYS.filter(d => { const day = PROGRAM[d]; return day && (!day.type || day.type==='rowing'); }).length; }
+function countCompletedDays(w){ return DAYS.filter(d => { const day = getProgram(w)[d]; if(!day||day.type==='rest'||day.type==='tennis') return false; return isDayCompleted(w,d); }).length; }
+function countTotalSessions(w){ return DAYS.filter(d => { const day = getProgram(w)[d]; return day && (!day.type || day.type==='rowing'); }).length; }
 
 function renderWeekSummary(){
   const completed = countCompletedDays(currentWeek);
@@ -1051,7 +1206,7 @@ function renderTabs(){
   const c = document.getElementById('dayTabs');
   c.innerHTML = '';
   DAYS.forEach((d,i) => {
-    const day = PROGRAM[d];
+    const day = getProgram(currentWeek)[d];
     const btn = document.createElement('button');
     btn.className = 'day-tab';
     btn.textContent = d;
@@ -1066,7 +1221,7 @@ function renderTabs(){
 /* ---------- Day rendering ---------- */
 function renderDay(){
   const dayKey = DAYS[currentDay];
-  const day = PROGRAM[dayKey];
+  const day = getProgram(currentWeek)[dayKey];
   const container = document.getElementById('dayContent');
 
   if (day.type === 'rowing'){ renderRowing(container, dayKey); return; }
@@ -1092,13 +1247,21 @@ function renderDay(){
     html += `<div class="block"><div class="block-header"><span class="block-label">${block.label}</span><span class="block-type">${block.type}</span></div>`;
     block.exercises.forEach(exOrig => {
       const ex = getSwappedExercise(dayKey, exOrig);
+
+      // Week-conditional display — weeks 1-2 use pre-change definitions
+      const preW3Override = currentWeek < CHANGE_WEEK && PRE_W3_EXERCISE[ex.id];
+      const displayEx = preW3Override ? { ...ex, ...PRE_W3_EXERCISE[ex.id] } : ex;
+
+      // Week-conditional input types
+      const isTimeBased     = currentWeek < CHANGE_WEEK ? PRE_W3_TIME_BASED.has(displayEx.name)  : TIME_BASED_EXERCISES.has(ex.name);
+      const isRepsOnly      = currentWeek < CHANGE_WEEK ? PRE_W3_REPS_ONLY.has(displayEx.name)   : REPS_ONLY_EXERCISES.has(ex.name);
+      const isWeightAndTime = currentWeek < CHANGE_WEEK ? false                                    : WEIGHT_AND_TIME_EXERCISES.has(ex.name);
+
       const supersetClass = ex.prefix === 'A' ? 'superset-a' : ex.prefix === 'B' ? 'superset-b' : '';
       let setCount = getSetCount(currentWeek, dayKey, ex.id, ex.sets);
-      if (deloadOn) setCount = Math.max(2, setCount - 1); // deload: one less set, min 2
+      if (deloadOn) setCount = Math.max(2, setCount - 1);
       const exUnit = getExUnit(dayKey, ex.id);
       const isPulley = PULLEY_EXERCISES.has(ex.name);
-      const isTimeBased = TIME_BASED_EXERCISES.has(ex.name);
-      const isRepsOnly = REPS_ONLY_EXERCISES.has(ex.name);
       const dp = getDp(ex.id);
       const coachNote = getCoachNote(dayKey, ex.id);
 
@@ -1106,15 +1269,15 @@ function renderDay(){
         <div>
           <div class="ex-name">
             ${ex.prefix ? `<span class="ex-prefix">${ex.prefix}</span>` : ''}
-            ${ex.name}
+            ${displayEx.name}
             ${isPulley ? `<button class="dp-tag ${dp?'active':''}" onclick="toggleDp('${ex.id}')" title="Double pulley">dp</button>` : ''}
             ${!completed ? `<button class="ex-icon-btn" onclick="openNoteEditor('${dayKey}','${ex.id}')" title="Add note">${coachNote?'📝':'ⓘ'}</button>` : (coachNote?`<span class="ex-icon-btn" style="cursor:default">📝</span>`:'')}
             ${!completed ? `<button class="ex-icon-btn" onclick="openSwapMenu('${dayKey}','${exOrig.id}')" title="Swap exercise">⇄</button>` : ''}
           </div>
           <div class="ex-meta-row">
-            <span class="ex-meta">${ex.sets} sets · ${ex.reps}</span>
+            <span class="ex-meta">${ex.sets} sets · ${displayEx.reps}</span>
           </div>
-          ${ex.note ? `<div class="ex-note">${ex.note}</div>` : ''}
+          ${displayEx.note ? `<div class="ex-note">${displayEx.note}</div>` : ''}
           ${coachNote ? `<div class="coach-note">${coachNote}</div>` : ''}
         </div>
         <div class="ex-inputs">
@@ -1123,6 +1286,12 @@ function renderDay(){
               <span style="width:140px;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">SECONDS</span>
             ` : isRepsOnly ? `
               <span style="width:140px;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">REPS</span>
+            ` : isWeightAndTime ? `
+              <div class="ex-unit-toggle">
+                <button class="ex-unit-btn ${exUnit==='kg'?'active':''}" onclick="setExUnit('${dayKey}','${ex.id}','kg')" ${completed?'disabled':''}>KG</button>
+                <button class="ex-unit-btn ${exUnit==='lbs'?'active':''}" onclick="setExUnit('${dayKey}','${ex.id}','lbs')" ${completed?'disabled':''}>LBS</button>
+              </div>
+              <span>SECS</span>
             ` : `
               <div class="ex-unit-toggle">
                 <button class="ex-unit-btn ${exUnit==='kg'?'active':''}" onclick="setExUnit('${dayKey}','${ex.id}','kg')" ${completed?'disabled':''}>KG</button>
@@ -1145,7 +1314,7 @@ function renderDay(){
         const ghost = (pw || pr) ? `<span class="ghost-ref" title="Last week">↳ ${pw||'?'}${pr?'×'+pr:''}${prevFat?' '+prevFat:''}</span>` : '';
 
         const setFat = getSetFatigue(currentWeek, dayKey, ex.id, s);
-        const isPR = w && !isTimeBased && !isRepsOnly && isCurrentWeightPR(dayKey, ex.id, parseFloat(w));
+        const isPR = w && !isTimeBased && !isRepsOnly && !isWeightAndTime && isCurrentWeightPR(dayKey, ex.id, parseFloat(w));
 
         if (isTimeBased) {
           const rPlaceholder = pr ? pr : 'sec';
@@ -1156,6 +1325,7 @@ function renderDay(){
               ${completed?'disabled':''}>
             <span class="set-divider" style="opacity:0.4">s</span>
             <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
+            ${!completed && s===setCount-1 && setCount>1 ? `<button class="remove-set-btn" onclick="removeSet('${dayKey}','${ex.id}',${setCount})" title="Remove set">−</button>` : ''}
           </div>`;
         } else if (isRepsOnly) {
           const rPlaceholder = pr ? pr : 'reps';
@@ -1165,6 +1335,23 @@ function renderDay(){
               onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
               ${completed?'disabled':''}>
             <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
+            ${!completed && s===setCount-1 && setCount>1 ? `<button class="remove-set-btn" onclick="removeSet('${dayKey}','${ex.id}',${setCount})" title="Remove set">−</button>` : ''}
+          </div>`;
+        } else if (isWeightAndTime) {
+          const wPlaceholder = pw ? pw : exUnit;
+          const rPlaceholder = pr ? pr : 'sec';
+          html += `<div class="set-row">
+            <span class="set-label">${s+1}</span>
+            <input type="number" class="set-input ${w?'filled':''} ${!w&&pw?'carryover':''}" placeholder="${wPlaceholder}" value="${w}"
+              onchange="saveVal('${dayKey}','${ex.id}',${s},'w',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              ${completed?'disabled':''}>
+            <span class="set-divider">×</span>
+            <input type="number" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+              onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              ${completed?'disabled':''}>
+            <span class="set-divider" style="opacity:0.4">s</span>
+            <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
+            ${!completed && s===setCount-1 && setCount>1 ? `<button class="remove-set-btn" onclick="removeSet('${dayKey}','${ex.id}',${setCount})" title="Remove set">−</button>` : ''}
           </div>`;
         } else {
           const wPlaceholder = pw ? pw : exUnit;
@@ -1180,6 +1367,7 @@ function renderDay(){
               ${completed?'disabled':''}>
             <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
             ${isPR ? `<span class="pr-badge" title="Personal Record">PR</span>` : ''}
+            ${!completed && s===setCount-1 && setCount>1 ? `<button class="remove-set-btn" onclick="removeSet('${dayKey}','${ex.id}',${setCount})" title="Remove set">−</button>` : ''}
           </div>`;
         }
       }
@@ -1319,6 +1507,15 @@ function saveVal(d,e,s,f,v){
   if (f === 'w' && v) checkAndSetPR(d,e,parseFloat(v));
 }
 function addSet(d,e,c){ setSetCount(currentWeek,d,e,c+1); render(); }
+function removeSet(d,e,c){
+  if (c <= 1) return;
+  // Clear data for the set being removed
+  const idx = c - 1;
+  ['w','r'].forEach(t => localStorage.removeItem(`alberto_w${currentWeek}_${d}_${e}_s${idx}_${t}`));
+  localStorage.removeItem(`alberto_w${currentWeek}_${d}_${e}_s${idx}_fat`);
+  setSetCount(currentWeek,d,e,c-1);
+  render();
+}
 function hapticTick(){ if (navigator.vibrate) navigator.vibrate(10); }function hapticSuccess(){ if (navigator.vibrate) navigator.vibrate([15, 40, 25]); }
 
 function completeDay(d){ setDayCompleted(currentWeek,d); hapticSuccess(); render(); }
@@ -1350,15 +1547,22 @@ let progressNormalize = false;
 
 const LINE_COLORS = ['#a78bfa','#5b8def','#f06ec0','#f0a85b','#4dd6b0','#e8645a','#c061d8','#5bc8ef'];
 
-// Build a flat list of all loggable exercises (skip rowing/rest/tennis)
+// Build a flat list of all loggable exercises across BOTH program versions
+// (so old exercises stay viewable in Progress after the week-9 redesign)
 function allExercises(){
   const list = [];
-  DAYS.forEach(d => {
-    const day = PROGRAM[d];
-    if (!day || day.type) return;
-    day.blocks.forEach(b => b.exercises.forEach(ex => {
-      list.push({ key: `${d}|${ex.id}`, day: d, exId: ex.id, name: ex.name });
-    }));
+  const seen = new Set();
+  [PROGRAM_V2, PROGRAM_V1].forEach(prog => {
+    DAYS.forEach(d => {
+      const day = prog[d];
+      if (!day || day.type) return;
+      day.blocks.forEach(b => b.exercises.forEach(ex => {
+        const key = `${d}|${ex.id}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        list.push({ key, day: d, exId: ex.id, name: ex.name });
+      }));
+    });
   });
   return list;
 }
@@ -1704,7 +1908,7 @@ function closeGhModal(){
 
 // ── Share session ────────────────────────────────────────────────────────────
 function buildSessionSummary(dayKey){
-  const day = PROGRAM[dayKey];
+  const day = getProgram(currentWeek)[dayKey];
   if (!day || !day.blocks) return { text: '', lines: [] };
   const dayName = DAY_NAMES[DAYS.indexOf(dayKey)] || dayKey;
   const lines = [];
@@ -1862,11 +2066,26 @@ function getCalendarMonday(date){
 function getAutoWeek(){
   const stored = localStorage.getItem(getProgramStartKey());
   const todayMonday = getCalendarMonday(new Date());
+
   if (!stored){
-    // First ever open — store this Monday as week 1 start
-    localStorage.setItem(getProgramStartKey(), todayMonday.toISOString());
-    return 1;
+    // No start date — infer current week from existing logged data
+    let maxWeek = 1;
+    for (let i = 1; i <= 52; i++){
+      const hasData = DAYS.some(d =>
+        localStorage.getItem(`alberto_w${i}_${d}_completed`) === '1' ||
+        localStorage.getItem(`alberto_w${i}_WED_rowing`) ||
+        localStorage.getItem(`alberto_w${i}_${d}_note`)
+      );
+      if (hasData) maxWeek = i;
+      else if (i > maxWeek + 2) break; // stop if 3 empty weeks in a row
+    }
+    // Back-calculate start date so today's week = maxWeek
+    const startDate = new Date(todayMonday);
+    startDate.setDate(startDate.getDate() - (maxWeek - 1) * 7);
+    localStorage.setItem(getProgramStartKey(), startDate.toISOString());
+    return maxWeek;
   }
+
   const startMonday = new Date(stored);
   const msPerWeek = 7 * 24 * 60 * 60 * 1000;
   const weeksElapsed = Math.floor((todayMonday - startMonday) / msPerWeek);
