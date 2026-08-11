@@ -682,6 +682,7 @@
     <button class="modal-btn" onclick="document.getElementById('importFile').click()">↑ Import backup file</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this.files[0])">
     <button class="modal-btn" onclick="resetProgramStart()" style="opacity:0.6;font-size:11px">⟳ Reset program start date</button>
+    <button class="modal-btn" onclick="startFresh()" style="opacity:0.6;font-size:11px">🧹 Start fresh — clear all logged weeks</button>
     <div class="modal-status" id="modalStatus"></div>
     <button class="modal-close" onclick="closeDataMenu()">Close</button>
   </div>
@@ -700,119 +701,8 @@
 const DAYS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
-const PROGRAM_V1 = {
-  MON: {
-    title: 'Full Body 1 — Power & Lower',
-    subtitle: 'Main Gym · ~55 min · Explosive anchor · Trap Bar',
-    note: 'Explosive intent throughout. Plyos first while CNS is fresh. Volume-first — moderate weight, clean reps.',
-    blocks: [
-      { label: 'BLOCK A', type: 'Power — Superset', exercises: [
-        { id: 'mon_a1', prefix: 'A', name: 'Kneeling → Jump → Deep Squat', sets: 3, reps: '3', note: 'Full reset between reps. Explosive intent.' },
-        { id: 'mon_a2', prefix: 'B', name: 'Lateral Bounds', sets: 3, reps: '6/side', note: 'Stick the landing. Absorb with control.' },
-      ]},
-      { label: 'BLOCK B', type: 'Main Compound — Standalone', exercises: [
-        { id: 'mon_b1', prefix: '', name: 'Trap Bar Deadlift', sets: 4, reps: '4–5', note: 'Heavy anchor. Explosive off floor. Moderate weight — not grinding.' },
-      ]},
-      { label: 'BLOCK C', type: 'Superset: Upper Push + Single Leg Hinge', exercises: [
-        { id: 'mon_c1', prefix: 'A', name: 'Landmine Shoulder Press', sets: 3, reps: '8/side', note: 'Unilateral vertical push. Core stability demand.' },
-        { id: 'mon_c2', prefix: 'B', name: 'Single Leg Hip Thrust with Hold', sets: 3, reps: '8/side', note: 'Pause 2s at top. Glute focus. Stability over load.' },
-      ]},
-      { label: 'BLOCK D', type: 'Superset: Upper Pull + Mobility', exercises: [
-        { id: 'mon_d1', prefix: 'A', name: 'Weighted Chin-Ups', sets: 3, reps: '5–6', note: '12–16kg. Moderate load. Full hang at bottom.' },
-        { id: 'mon_d2', prefix: 'B', name: 'KB Halo', sets: 3, reps: '8/side', note: 'Shoulder mobility and core. Done right at the rack.' },
-      ]},
-      { label: 'BLOCK E', type: 'Superset: Core + Isometric', exercises: [
-        { id: 'mon_e1', prefix: 'A', name: 'Ab Wheel Rollout', sets: 3, reps: '8–10', note: 'Full extension. Don\u2019t let lower back sag.' },
-        { id: 'mon_e2', prefix: 'B', name: 'Single Leg Wall Sit', sets: 3, reps: '30–40s/side', note: 'Isometric. Single leg — addresses asymmetry and tennis carry-over.' },
-      ]},
-    ]
-  },
-  TUE: {
-    title: 'Full Body 2 — Chest & Push',
-    subtitle: 'Main Gym · ~55 min · DB Bench anchor',
-    note: 'Chest leads but pull and lower body both present. Volume-first — moderate weight, clean reps.',
-    blocks: [
-      { label: 'BLOCK A', type: 'Main Compound — Standalone', exercises: [
-        { id: 'tue_a1', prefix: '', name: 'DB Bench Press', sets: 4, reps: '6–8', note: 'Heavy anchor. Full focus. No superset.' },
-      ]},
-      { label: 'BLOCK B', type: 'Superset: Upper Pull + Hinge', exercises: [
-        { id: 'tue_b1', prefix: 'A', name: 'Neutral Grip Lat Pulldown', sets: 3, reps: '8–10', note: 'Vertical pull. Balances the push anchor.' },
-        { id: 'tue_b2', prefix: 'B', name: 'KB Split Stance RDL', sets: 3, reps: '10/side', note: 'Hinge. Lower body touch. 3s eccentric.' },
-      ]},
-      { label: 'BLOCK C', type: 'Superset: Chest + Isometric', exercises: [
-        { id: 'tue_c1', prefix: 'A', name: 'Cable Chest Fly', sets: 3, reps: '12–15', note: 'Second chest touch. Stretch focused.' },
-        { id: 'tue_c2', prefix: 'B', name: 'Single Leg Lunge Hold on Toes', sets: 3, reps: '35s/side', note: 'Stability isometric. Chest rests, legs work.' },
-      ]},
-      { label: 'BLOCK D', type: 'Superset: Shoulder + Core', exercises: [
-        { id: 'tue_d1', prefix: 'A', name: 'Cable Lateral Raise (Full ROM)', sets: 3, reps: '12–15', note: 'Slow and controlled. Full range.' },
-        { id: 'tue_d2', prefix: 'B', name: 'Pallof Press', sets: 3, reps: '12/side', note: 'Anti-rotation core. Tennis carry-over.' },
-      ]},
-      { label: 'BLOCK E', type: 'Superset: Tricep + Bicep', exercises: [
-        { id: 'tue_e1', prefix: 'A', name: 'Cable Tricep Overhead Extension', sets: 3, reps: '10–12', note: 'Long head emphasis.' },
-        { id: 'tue_e2', prefix: 'B', name: 'Bayesian Bicep Curl', sets: 3, reps: '10–12', note: 'Full stretch at bottom. Antagonist pair.' },
-      ]},
-    ]
-  },
-  WED: { type: 'rowing', title: 'VO2 Max', subtitle: 'Main Gym · ~40 min · 4x4 Rowing Intervals' },
-  THU: {
-    title: 'Full Body 3 — Athletic & Conditioning',
-    subtitle: 'Main Gym · ~55 min · Weighted Dips anchor',
-    note: 'Conditioning feel throughout. Day after rowing — no grinding. High quality movement over heavy load.',
-    blocks: [
-      { label: 'BLOCK A', type: 'Horizontal Pull — Standalone', exercises: [
-        { id: 'thu_a1', prefix: '', name: 'Barbell Row', sets: 3, reps: '6–8', note: 'Early while fresh. Core braced. No lower back rounding.' },
-      ]},
-      { label: 'BLOCK B', type: 'Main Compound — Standalone', exercises: [
-        { id: 'thu_b1', prefix: '', name: 'Weighted Dips', sets: 4, reps: '6–8', note: '16–20kg. Forward lean for chest emphasis. Anchor of the session.' },
-      ]},
-      { label: 'BLOCK C', type: 'Superset: KB Complex + Isometric', exercises: [
-        { id: 'thu_c1', prefix: 'A', name: 'KB Swing → Clean → Press (Single Arm)', sets: 3, reps: '5/side', note: 'Athletic flow. Power and conditioning. Reset between movements.' },
-        { id: 'thu_c2', prefix: 'B', name: 'Copenhagen Plank Hold', sets: 3, reps: '35s/side', note: 'Core and adductor. Natural pair — upper rests.' },
-      ]},
-      { label: 'BLOCK D', type: 'Superset: Lateral Lower + Arms', exercises: [
-        { id: 'thu_d1', prefix: 'A', name: 'KB Cossack Squat + Rotation', sets: 3, reps: '8/side', note: 'Lateral mobility. Rotational power. Tennis carry-over.' },
-        { id: 'thu_d2', prefix: 'B', name: 'KB Curl + Overhead Tricep Extension', sets: 3, reps: '10/side', note: 'Flow between movements. Arms active while lower rests.' },
-      ]},
-      { label: 'BLOCK E', type: 'Superset: Core + Shoulder', exercises: [
-        { id: 'thu_e1', prefix: 'A', name: 'Hanging Leg Raise', sets: 3, reps: '10–12', note: 'Full ROM. Control the descent.' },
-        { id: 'thu_e2', prefix: 'B', name: 'Cable Lateral Raise (Full ROM)', sets: 3, reps: '12–15', note: 'Light finisher. Shoulder isolation.' },
-      ]},
-    ]
-  },
-  FRI: { type: 'tennis' },
-  SAT: {
-    title: 'Full Body 4 — Pull & Integration',
-    subtitle: 'Main Gym · ~55 min · Weighted Pull-Ups anchor · 24kg belt',
-    note: '⚑ Comes after Friday tennis. If match was long or intense, drop Block E. Never cut Block A or B.',
-    blocks: [
-      { label: 'BLOCK A', type: 'Main Compound — Standalone', exercises: [
-        { id: 'sat_a1', prefix: '', name: 'Weighted Pull-Ups', sets: 4, reps: '4–6', note: '24kg belt. Full hang at bottom, chin over bar. King of the session.' },
-      ]},
-      { label: 'BLOCK B', type: 'Superset: Squat + Isometric', exercises: [
-        { id: 'sat_b1', prefix: 'A', name: 'Barbell Squat', sets: 3, reps: '6–8', note: 'Lower body anchor. Progressive overload — add a rep or 5 lbs vs last week.' },
-        { id: 'sat_b2', prefix: 'B', name: 'Wall Sit + Ankle Raise', sets: 3, reps: '40s', note: 'Isometric. Lower body active while upper recovers.' },
-      ]},
-      { label: 'BLOCK C', type: 'Superset: Horizontal Pull + Lateral Lower', exercises: [
-        { id: 'sat_c1', prefix: 'A', name: 'Kneeling Single Arm Cable Row + Rotation', sets: 3, reps: '10/side', note: 'Athletic horizontal pull. Anti-rotation demand. Core stays engaged.' },
-        { id: 'sat_c2', prefix: 'B', name: 'Slider Side Lunge with KB', sets: 3, reps: '8/side', note: 'Lateral lower. Slow slide, drive through heel to return.' },
-      ]},
-      { label: 'BLOCK D', type: 'Superset: Rear Delt + Core', exercises: [
-        { id: 'sat_d1', prefix: 'A', name: 'Face Pull', sets: 3, reps: '12–15', note: 'Rotator cuff. Post-tennis essential — don\u2019t skip.' },
-        { id: 'sat_d2', prefix: 'B', name: 'Plank', sets: 3, reps: '45–60s', note: 'Core finisher. Pairs naturally while rear delt recovers.' },
-      ]},
-      { label: 'BLOCK E', type: 'Bicep Finisher — Standalone', exercises: [
-        { id: 'sat_e1', prefix: '', name: 'DB Preacher Curl', sets: 3, reps: '8–10', note: 'Full stretch at bottom. Back pre-fatigued — go lighter than you think.' },
-      ]},
-    ]
-  },
-  SUN: { type: 'rest' }
-};
-
-// ═══ PROGRAM V2 — redesigned block (KB flows, essential, 45–50 min) ═══
-// Active from NEW_PROGRAM_WEEK onward. Earlier weeks keep V1 for clean history.
-const NEW_PROGRAM_WEEK = 9;
-
-const PROGRAM_V2 = {
+// ═══ PROGRAM — KB flows, essential, 45–50 min · starts week 1 ═══
+const PROGRAM = {
   MON: {
     title: 'Full Body 1 — Power & Strength',
     subtitle: 'Main Gym · ~50 min · Plyos first · Landmine anchor',
@@ -921,11 +811,10 @@ const PROGRAM_V2 = {
   SUN: { type: 'rest' }
 };
 
-function getProgram(w){ return w >= NEW_PROGRAM_WEEK ? PROGRAM_V2 : PROGRAM_V1; }
+function getProgram(w){ return PROGRAM; }
 
 const PULLEY_EXERCISES = new Set([
-  'Cable Chest Fly','Cable Lateral Raise (Full ROM)','Cable Tricep Overhead Extension',
-  'Pallof Press','Face Pull','Bayesian Bicep Curl',
+  'Cable Chest Fly','Cable Lateral Raise (Full ROM)','Face Pull',
   'Kneeling Single Arm Cable Row + Rotation','Neutral Grip Lat Pulldown',
 ]);
 
@@ -934,10 +823,7 @@ const TIME_BASED_EXERCISES = new Set([
   'Single Leg Wall Sit',
   'Wall Sit + Ankle Raise',
   'Copenhagen Plank Hold',
-  'Single Leg Lunge Hold on Toes',
   'Plank',
-  'Dead Hang',
-  'Glute Bridge Iso Hold',
 ]);
 
 // Plyometric exercises — log reps only, no weight
@@ -954,29 +840,6 @@ const WEIGHT_AND_TIME_EXERCISES = new Set([
   'Single Leg Lunge Hold on Toes',
 ]);
 
-// ── Week 3 program changes ────────────────────────────────────────────────────
-// Weeks 1–2 use old definitions. Week 3+ uses current PROGRAM definitions.
-const CHANGE_WEEK = 3;
-
-// Pre-week-3 display overrides (name/reps/note only — data key stays same)
-const PRE_W3_EXERCISE = {
-  'mon_e2': { name: 'Wall Sit + Toe Raise', reps: '40s', note: 'Isometric lower. Legs work while core recovers.' },
-};
-
-// Pre-week-3 input types
-const PRE_W3_TIME_BASED = new Set([
-  'Wall Sit + Toe Raise',
-  'Wall Sit + Ankle Raise',
-  'Copenhagen Plank Hold',
-  'Single Leg Lunge Hold on Toes',
-  'Single Leg Hip Thrust with Hold',
-  'Plank', 'Dead Hang', 'Glute Bridge Iso Hold',
-]);
-const PRE_W3_REPS_ONLY = new Set([
-  'Kneeling → Jump → Deep Squat',
-  'Lateral Bounds',
-  'Ab Wheel Rollout', 'Hanging Leg Raise',
-]);
 
 let currentWeek = 1;
 let currentDay = 0;
@@ -1040,6 +903,24 @@ function resetProgramStart(){
   updateWeekLabel();
   closeDataMenu();
   render();
+}
+
+function startFresh(){
+  if (!confirm('Start from scratch? This clears ALL logged weeks — sets, notes, completions, recovery checks. PRs, coach notes, and unit preferences are kept. Export a backup first if you want to archive your history. Continue?')) return;
+  const doomed = [];
+  for (let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if (/^alberto_w\d+_/.test(k)) doomed.push(k);
+  }
+  doomed.forEach(k => localStorage.removeItem(k));
+  const monday = getCalendarMonday(new Date());
+  localStorage.setItem(getProgramStartKey(), monday.toISOString());
+  localStorage.setItem('alberto_maxweeks', '4');
+  MAX_WEEKS = 4;
+  currentWeek = 1;
+  updateWeekLabel();
+  closeDataMenu();
+  render();
 }function toggleDeload(w){
   const key = `alberto_w${w}_deload`;
   if (localStorage.getItem(key) === '1') localStorage.removeItem(key);
@@ -1062,7 +943,7 @@ function openNoteEditor(d, e){
 
 // ── Exercise swap (per day/week only) ───────────────────────────────────────
 const SWAP_OPTIONS = [
-  'Goblet Squat','Bulgarian Split Squat','Romanian Deadlift','Leg Press','Walking Lunge',
+  'Goblet Squat','Bulgarian Split Squat','Romanian Deadlift','Walking Lunge','Landmine Single Leg Squat',
   'DB Shoulder Press','Arnold Press','Incline DB Press','Push-Up','Dips',
   'Lat Pulldown','Seated Cable Row','Chest-Supported Row','Pull-Up','Inverted Row',
   'DB Curl','Hammer Curl','Tricep Pushdown','Skull Crusher','Lateral Raise',
@@ -1248,14 +1129,10 @@ function renderDay(){
     block.exercises.forEach(exOrig => {
       const ex = getSwappedExercise(dayKey, exOrig);
 
-      // Week-conditional display — weeks 1-2 use pre-change definitions
-      const preW3Override = currentWeek < CHANGE_WEEK && PRE_W3_EXERCISE[ex.id];
-      const displayEx = preW3Override ? { ...ex, ...PRE_W3_EXERCISE[ex.id] } : ex;
-
-      // Week-conditional input types
-      const isTimeBased     = currentWeek < CHANGE_WEEK ? PRE_W3_TIME_BASED.has(displayEx.name)  : TIME_BASED_EXERCISES.has(ex.name);
-      const isRepsOnly      = currentWeek < CHANGE_WEEK ? PRE_W3_REPS_ONLY.has(displayEx.name)   : REPS_ONLY_EXERCISES.has(ex.name);
-      const isWeightAndTime = currentWeek < CHANGE_WEEK ? false                                    : WEIGHT_AND_TIME_EXERCISES.has(ex.name);
+      const displayEx = ex;
+      const isTimeBased     = TIME_BASED_EXERCISES.has(ex.name);
+      const isRepsOnly      = REPS_ONLY_EXERCISES.has(ex.name);
+      const isWeightAndTime = WEIGHT_AND_TIME_EXERCISES.has(ex.name);
 
       const supersetClass = ex.prefix === 'A' ? 'superset-a' : ex.prefix === 'B' ? 'superset-b' : '';
       let setCount = getSetCount(currentWeek, dayKey, ex.id, ex.sets);
@@ -1552,7 +1429,7 @@ const LINE_COLORS = ['#a78bfa','#5b8def','#f06ec0','#f0a85b','#4dd6b0','#e8645a'
 function allExercises(){
   const list = [];
   const seen = new Set();
-  [PROGRAM_V2, PROGRAM_V1].forEach(prog => {
+  [PROGRAM].forEach(prog => {
     DAYS.forEach(d => {
       const day = prog[d];
       if (!day || day.type) return;
