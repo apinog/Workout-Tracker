@@ -84,6 +84,37 @@
     --theme-color: #ffffff;
   }
 
+  /* ── Design tokens — shared across themes ────────────────────────────── */
+  :root {
+    /* Spacing scale (4px base) */
+    --s1: 4px;   --s2: 8px;   --s3: 12px;  --s4: 16px;
+    --s5: 20px;  --s6: 24px;  --s8: 32px;  --s10: 40px;
+
+    /* Radius scale */
+    --r-sm: 6px; --r-md: 9px; --r-lg: 12px; --r-xl: 16px;
+
+    /* Motion — one easing curve, three speeds */
+    --ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --t-fast: 120ms;
+    --t-base: 200ms;
+    --t-slow: 320ms;
+
+    /* Type scale */
+    --fs-micro: 9px;  --fs-tiny: 10px; --fs-xs: 11px;
+    --fs-sm: 12px;    --fs-md: 13px;   --fs-lg: 15px;
+
+    /* Semantic */
+    --danger: #e5484d;
+    --danger-soft: rgba(229, 72, 77, 0.12);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html {
@@ -450,11 +481,13 @@
   .notes-input::placeholder { color: var(--muted); }
 
   .deload-banner {
-    background: linear-gradient(135deg, #1e1830, #251e3a);
+    background: var(--note-bg);
     border: 1px solid var(--accent-dim); border-left: 3px solid var(--accent);
-    border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 16px;
-    font-size: 13px; color: var(--note-text); line-height: 1.5; font-weight: 500;
+    border-radius: 0 var(--r-md) var(--r-md) 0; padding: var(--s3) var(--s4); margin-bottom: var(--s4);
+    font-size: var(--fs-md); color: var(--note-text); line-height: 1.5; font-weight: 500;
+    transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
   }
+  .deload-banner:active { transform: scale(0.99); }
 
   .rowing-progress-section { margin-top: 24px; }
   .section-title {
@@ -598,23 +631,33 @@
 
   /* Modal */
   .modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 24px;
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center; padding: var(--s6);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    transition: opacity var(--t-base) var(--ease), visibility var(--t-base);
   }
-  .modal-overlay.open { display: flex; }
+  .modal-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; }
   .modal {
-    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-    padding: 24px; max-width: 380px; width: 100%; box-shadow: 0 20px 60px var(--shadow);
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--s4);
+    padding: var(--s6); max-width: 380px; width: 100%; box-shadow: 0 20px 60px var(--shadow);
+    max-height: 85vh; overflow-y: auto;
+    transform: translateY(12px) scale(0.97);
+    transition: transform var(--t-base) var(--ease);
   }
-  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--accent); margin-bottom: 10px; }
-  .modal-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 18px; }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--accent); margin-bottom: var(--s3); }
+  .modal-desc { font-size: var(--fs-md); color: var(--text-dim); line-height: 1.6; margin-bottom: var(--s5); }
   .modal-btn {
-    display: block; width: 100%; padding: 13px; margin-bottom: 10px;
-    background: var(--input-bg); border: 1px solid var(--border); border-radius: 9px;
-    color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px;
-    letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s;
+    display: block; width: 100%; padding: 13px; margin-bottom: var(--s2);
+    background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r-md);
+    color: var(--text); font-family: 'DM Mono', monospace; font-size: var(--fs-md);
+    letter-spacing: 0.5px; cursor: pointer;
+    transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
   }
   .modal-btn:hover { border-color: var(--accent); }
+  .modal-btn:active { transform: scale(0.98); }
   .modal-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 500; }
   .modal-btn.primary:hover { filter: brightness(1.08); }
   .modal-status { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent-dim); text-align: center; min-height: 16px; margin: 4px 0 8px; }
@@ -625,7 +668,7 @@
   }
   .modal-close:hover { color: var(--text); }
 
-  /* Google Health integration */
+  /* Shared picker list (swap / share / programs) */
   .session-picker { margin: 0 0 4px; }
   .session-picker-label { font-family: "DM Mono", monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
   .session-option {
@@ -638,6 +681,96 @@
   .session-option-time { font-family: "DM Mono", monospace; font-size: 11px; color: var(--muted); }
   .session-option-dur { font-family: "DM Mono", monospace; font-size: 11px; color: var(--accent); }
 
+  .program-card {
+    padding: 14px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+  }
+  .program-card:hover { border-color: var(--accent); }
+  .program-card.active { border-color: var(--accent); background: var(--accent-soft); }
+  .program-card.disabled { cursor: default; opacity: 0.45; }
+  .program-card.disabled:hover { border-color: var(--border); }
+  .program-card-top { display: flex; align-items: center; justify-content: space-between; }
+  .program-card-name { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; color: var(--text); }
+  .program-card-tag {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 5px; padding: 2px 6px;
+  }
+  .program-card-tag.soon { color: var(--muted); border-color: var(--border); }
+  .program-card-tagline { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .program-card:not(.disabled):active { transform: scale(0.99); }
+
+  /* ── Settings screen ─────────────────────────────────────────────────── */
+  .settings-group { margin-bottom: var(--s5); }
+  .settings-group:last-of-type { margin-bottom: var(--s3); }
+  .settings-label {
+    font-family: 'DM Mono', monospace; font-size: var(--fs-micro); color: var(--muted);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: var(--s2); padding-left: 2px;
+  }
+  .settings-row {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+    width: 100%; text-align: left; padding: 13px var(--s3); margin-bottom: var(--s1);
+    background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r-md);
+    cursor: pointer;
+    transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+  }
+  .settings-row:hover { border-color: var(--accent); }
+  .settings-row:active { transform: scale(0.99); }
+  .settings-row-name { font-family: 'DM Sans', sans-serif; font-size: var(--fs-md); color: var(--text); font-weight: 500; }
+  .settings-row-val {
+    font-family: 'DM Mono', monospace; font-size: var(--fs-xs); color: var(--muted);
+    text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%;
+  }
+  .settings-row.danger .settings-row-name { color: var(--danger); }
+  .settings-row.danger:hover { border-color: var(--danger); background: var(--danger-soft); }
+
+  .modal-btn.danger {
+    background: var(--danger-soft); border-color: var(--danger); color: var(--danger); font-weight: 500;
+  }
+  .modal-btn.danger:hover { background: var(--danger); color: #fff; }
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  @keyframes dayEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  #dayContent.enter > * { animation: dayEnter var(--t-base) var(--ease) both; }
+  #dayContent.enter > *:nth-child(2) { animation-delay: 30ms; }
+  #dayContent.enter > *:nth-child(3) { animation-delay: 60ms; }
+  #dayContent.enter > *:nth-child(4) { animation-delay: 90ms; }
+  #dayContent.enter > *:nth-child(5) { animation-delay: 120ms; }
+  #dayContent.enter > *:nth-child(n+6) { animation-delay: 150ms; }
+
+  /* Press feedback — physical, immediate */
+  .day-tab, .view-tab, .complete-btn, .share-btn, .add-set-btn,
+  .recovery-item, .session-option, .ex-icon-btn, .dp-tag, .set-fat {
+    transition: background var(--t-fast) var(--ease),
+                border-color var(--t-fast) var(--ease),
+                color var(--t-fast) var(--ease),
+                transform var(--t-fast) var(--ease),
+                opacity var(--t-fast) var(--ease);
+  }
+  .day-tab:active, .view-tab:active { transform: scale(0.96); }
+  .complete-btn:not(:disabled):active, .share-btn:active { transform: scale(0.99); }
+  .add-set-btn:active, .set-fat:active, .ex-icon-btn:active, .dp-tag:active { transform: scale(0.94); }
+  .recovery-item:active, .session-option:active { transform: scale(0.99); }
+
+  /* Set inputs — animate the fill state, not just the border */
+  .set-input {
+    transition: border-color var(--t-fast) var(--ease),
+                color var(--t-fast) var(--ease),
+                background var(--t-fast) var(--ease);
+  }
+  .set-input:focus { transform: none; }
+
+  /* Recovery checkbox — spring the tick in */
+  .recovery-check { transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease); }
+  .recovery-item.checked .recovery-check { animation: tickPop var(--t-base) var(--ease); }
+  @keyframes tickPop { 0%{transform:scale(0.6)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
+
+  /* Session complete — confirm the action */
+  .complete-btn.done { animation: doneSettle var(--t-slow) var(--ease); }
+  @keyframes doneSettle { 0%{transform:scale(1.02)} 100%{transform:scale(1)} }
+
 </style>
 </head>
 <body>
@@ -645,10 +778,10 @@
 <header>
   <div class="header-left">
     <h1>Alberto — Tracker</h1>
-    <p>Full Body Block · Athletic Performance</p>
+    <p id="programLabel">Full Body · Athletic Performance</p>
   </div>
   <div class="header-controls">
-    <button class="icon-btn" id="dataBtn" onclick="openDataMenu()" title="Backup & data">⤓</button>
+    <button class="icon-btn" id="dataBtn" onclick="openDataMenu()" title="Settings">⚙</button>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☾</button>
     <div class="week-nav" id="weekNav">
       <button onclick="changeWeek(-1)">‹</button>
@@ -676,14 +809,9 @@
 <!-- Data / Backup modal -->
 <div class="modal-overlay" id="dataModal" onclick="if(event.target===this)closeDataMenu()">
   <div class="modal">
-    <div class="modal-title">Backup & Data</div>
-    <p class="modal-desc">Your training data lives only on this device. Export a backup file regularly so you never lose your history — you can restore it anytime, even on a new phone.</p>
-    <button class="modal-btn primary" onclick="exportData()">↓ Export backup file</button>
-    <button class="modal-btn" onclick="document.getElementById('importFile').click()">↑ Import backup file</button>
+    <div class="modal-title">Settings</div>
+    <div id="settingsBody"></div>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this.files[0])">
-    <button class="modal-btn" onclick="resetProgramStart()" style="opacity:0.6;font-size:11px">⟳ Reset program start date</button>
-    <button class="modal-btn" onclick="startFresh()" style="opacity:0.6;font-size:11px">🧹 Start fresh — clear all logged weeks</button>
-    <div class="modal-status" id="modalStatus"></div>
     <button class="modal-close" onclick="closeDataMenu()">Close</button>
   </div>
 </div>
@@ -702,28 +830,24 @@ const DAYS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 // ═══ PROGRAM — KB flows, essential, 45–50 min · starts week 1 ═══
-const PROGRAM = {
+const FULL_BODY_SCHEDULE = {
   MON: {
-    title: 'Full Body 1 — Power & Strength',
-    subtitle: 'Main Gym · ~50 min · Plyos first · Landmine anchor',
-    note: 'Plyos while CNS is fresh. Landmine hinge — push the floor away, lower back stays neutral.',
+    title: 'Full Body 1 — Power & Pull',
+    subtitle: 'Main Gym · ~45 min · Plyos first · KB Swing anchor',
+    note: 'Plyos while CNS is fresh. Heavy KB Swing for explosive power — no lower back deadlift loading.',
     blocks: [
       { label: 'BLOCK A', type: 'Plyometrics — Superset', exercises: [
         { id: 'mon_a1', prefix: 'A', name: 'Kneeling → Jump → Deep Squat', sets: 3, reps: '3', note: 'Full reset between reps. Explosive intent.' },
         { id: 'mon_a2', prefix: 'B', name: 'Lateral Bounds', sets: 3, reps: '6/side', note: 'Stick the landing. Ball optional.' },
       ]},
-      { label: 'BLOCK B', type: 'Strength Anchor — Standalone', exercises: [
-        { id: 'mon_b2', prefix: '', name: 'Landmine Deadlift', sets: 4, reps: '5', note: 'Explosive off the floor. Hinge, not squat. Progressive overload anchor.' },
+      { label: 'BLOCK B', type: 'Power Anchor — Standalone', exercises: [
+        { id: 'mon_b3', prefix: '', name: 'Heavy KB Swing', sets: 4, reps: '8', note: 'Explosive hip extension. Complements plyos, no lower back concern.' },
       ]},
-      { label: 'BLOCK C', type: 'Superset: Push + Isometric', exercises: [
-        { id: 'mon_c1', prefix: 'A', name: 'Landmine Shoulder Press', sets: 3, reps: '8/side', note: 'Unilateral vertical push. Core stability demand.' },
-        { id: 'mon_e2', prefix: 'B', name: 'Single Leg Wall Sit', sets: 3, reps: '30–40s/side', note: 'Isometric. Addresses asymmetry.' },
+      { label: 'BLOCK C', type: 'Superset: Pull + Isometric', exercises: [
+        { id: 'mon_d1', prefix: 'A', name: 'Weighted Chin-Ups', sets: 3, reps: '5–6', note: '12–16kg. Full hang at bottom. Hits biceps too.' },
+        { id: 'mon_e2', prefix: 'B', name: 'Single Leg Wall Sit', sets: 3, reps: '30–40s/side', note: 'Isometric. Addresses asymmetry. Active rest between pull sets.' },
       ]},
-      { label: 'BLOCK D', type: 'Superset: Pull + Isometric', exercises: [
-        { id: 'mon_d1', prefix: 'A', name: 'Weighted Chin-Ups', sets: 3, reps: '5–6', note: '12–16kg. Full hang at bottom.' },
-        { id: 'mon_c2', prefix: 'B', name: 'Single Leg Hip Thrust with Hold', sets: 3, reps: '8/side', note: 'Pause 2s at top. Doesn\u2019t compete with chin-ups.' },
-      ]},
-      { label: 'BLOCK E', type: 'Superset: KB Flow + Core', exercises: [
+      { label: 'BLOCK D', type: 'Superset: KB Flow + Core', exercises: [
         { id: 'mon_d2', prefix: 'A', name: 'KB Halo', sets: 3, reps: '8/side', note: 'Shoulder mobility and core. Low fatigue finisher.' },
         { id: 'mon_e1', prefix: 'B', name: 'Ab Wheel Rollout', sets: 3, reps: '8–10', note: 'Full extension. Don\u2019t let lower back sag.' },
       ]},
@@ -731,25 +855,21 @@ const PROGRAM = {
   },
   TUE: {
     title: 'Full Body 2 — KB Complexes & Push',
-    subtitle: 'Main Gym · ~50 min · DB Bench anchor',
-    note: 'Dynamic and flowing. One heavy anchor, KB complexes, dips to finish strong.',
+    subtitle: 'Main Gym · ~45 min · DB Bench anchor',
+    note: 'Dynamic and flowing. One heavy anchor, KB complex, dips to finish strong.',
     blocks: [
       { label: 'BLOCK A', type: 'Strength Anchor — Standalone', exercises: [
         { id: 'tue_a1', prefix: '', name: 'DB Bench Press', sets: 4, reps: '6–8', note: 'Heavy anchor. Full focus. No superset.' },
       ]},
-      { label: 'BLOCK B', type: 'Superset: Vertical Pull + Isometric', exercises: [
-        { id: 'tue_b1', prefix: 'A', name: 'Neutral Grip Lat Pulldown', sets: 3, reps: '8–10', note: 'Vertical pull. No grip competition with the isometric.' },
-        { id: 'tue_c2', prefix: 'B', name: 'Single Leg Lunge Hold on Toes', sets: 3, reps: '35s/side', note: 'Stability isometric. Weighted from week 3.' },
+      { label: 'BLOCK B', type: 'Superset: Horizontal Pull + Isometric', exercises: [
+        { id: 'tue_b2', prefix: 'A', name: 'Seated Cable Row', sets: 3, reps: '8–10', note: 'Horizontal pull — balances the week\u2019s vertical pull volume.' },
+        { id: 'tue_c2', prefix: 'B', name: 'Single Leg Lunge Hold on Toes', sets: 3, reps: '35s/side', note: 'Stability isometric.' },
       ]},
       { label: 'BLOCK C', type: 'Superset: KB Complex + Obliques', exercises: [
         { id: 'tue_c3', prefix: 'A', name: 'KB Curl → Front Press → Overhead Tricep', sets: 3, reps: '8/side', note: 'Full flow. Forearms work together, not against a pull.' },
         { id: 'tue_c4', prefix: 'B', name: 'KB Kneeling Oblique Shift', sets: 3, reps: '8/side', note: 'Kneeling, shift KB laterally. Oblique focus.' },
       ]},
-      { label: 'BLOCK D', type: 'Superset: Chest + Shoulder Isolation', exercises: [
-        { id: 'tue_c1', prefix: 'A', name: 'Cable Chest Fly', sets: 3, reps: '12–15', note: 'Stretch focused. Both cables — easy transition.' },
-        { id: 'tue_d1', prefix: 'B', name: 'Cable Lateral Raise (Full ROM)', sets: 3, reps: '12–15', note: 'Slow and controlled. Full range.' },
-      ]},
-      { label: 'BLOCK E', type: 'Push Finisher — Standalone', exercises: [
+      { label: 'BLOCK D', type: 'Push Finisher — Standalone', exercises: [
         { id: 'tue_e3', prefix: '', name: 'Weighted Dips', sets: 3, reps: '6–8', note: 'Standalone — go in fresh, push the weight properly.' },
       ]},
     ]
@@ -757,25 +877,21 @@ const PROGRAM = {
   WED: { type: 'rowing', title: 'VO2 Max', subtitle: 'Main Gym · ~40 min · 4x4 Rowing Intervals' },
   THU: {
     title: 'Full Body 3 — Athletic & Small Muscles',
-    subtitle: 'Main Gym · ~50 min · Barbell Row anchor',
+    subtitle: 'Main Gym · ~45 min · Barbell Row anchor',
     note: 'Day after rowing — quality movement over heavy load. Lateral, rotational, injury-proofing work.',
     blocks: [
       { label: 'BLOCK A', type: 'Horizontal Pull — Standalone', exercises: [
         { id: 'thu_a1', prefix: '', name: 'Barbell Row', sets: 3, reps: '6–8', note: 'Early while fresh. Core braced. No lower back rounding.' },
       ]},
       { label: 'BLOCK B', type: 'Superset: KB Complex + Lateral', exercises: [
-        { id: 'thu_c1', prefix: 'A', name: 'KB Swing → Clean → Press (Single Arm)', sets: 3, reps: '5/side', note: 'Athletic flow. Power and conditioning.' },
-        { id: 'thu_b2', prefix: 'B', name: 'Slider Side Lunge with KB', sets: 3, reps: '8/side', note: 'Lateral lower. Slow slide, drive through heel.' },
+        { id: 'thu_c3', prefix: 'A', name: 'KB Clean → Press (Single Arm)', sets: 3, reps: '5/side', note: 'Athletic flow — distinct from Monday\u2019s swing pattern.' },
+        { id: 'thu_b2', prefix: 'B', name: 'Slider Side Lunge with KB', sets: 3, reps: '8/side', note: 'Lateral lower. Slow slide, drive through heel. Protects inner knee.' },
       ]},
       { label: 'BLOCK C', type: 'Superset: Rotational + Stability', exercises: [
         { id: 'thu_d1', prefix: 'A', name: 'KB Cossack Squat + Rotation', sets: 3, reps: '8/side', note: 'Lateral mobility. Rotational power. Tennis carry-over.' },
         { id: 'thu_c2', prefix: 'B', name: 'Copenhagen Plank Hold', sets: 3, reps: '35s/side', note: 'Core and adductor. Knee health.' },
       ]},
-      { label: 'BLOCK D', type: 'Superset: Small Muscles', exercises: [
-        { id: 'thu_d3', prefix: 'A', name: 'Face Pull', sets: 3, reps: '15', note: 'Rear delt + rotator cuff. 2x/week is earned for tennis.' },
-        { id: 'thu_d4', prefix: 'B', name: 'Calf Raise (Weighted)', sets: 3, reps: '15', note: 'Slow tempo. Pause at stretch and top.' },
-      ]},
-      { label: 'BLOCK E', type: 'Superset: Core + Hamstring', exercises: [
+      { label: 'BLOCK D', type: 'Superset: Core + Hamstring', exercises: [
         { id: 'thu_e1', prefix: 'A', name: 'Hanging Leg Raise', sets: 3, reps: '10–12', note: 'Full ROM. Control the descent.' },
         { id: 'thu_e3', prefix: 'B', name: 'Nordic Curl', sets: 3, reps: '4–6', note: 'Eccentric hamstring. Best re-tear insurance there is. Control down.' },
       ]},
@@ -784,38 +900,244 @@ const PROGRAM = {
   FRI: { type: 'tennis' },
   SAT: {
     title: 'Full Body 4 — Pull, KB & Rotational',
-    subtitle: 'Main Gym · ~50 min · Weighted Pull-Ups anchor · 24kg belt',
-    note: '⚑ Comes after Friday tennis. If match was long or intense, drop Block E. Never cut Block A or B.',
+    subtitle: 'Main Gym · ~45 min · Weighted Pull-Ups anchor · 24kg belt',
+    note: '⚑ Comes after Friday tennis. If match was long or intense, drop Block D. Never cut Block A or B.',
     blocks: [
-      { label: 'BLOCK A', type: 'Strength Anchor — Standalone', exercises: [
-        { id: 'sat_a1', prefix: '', name: 'Weighted Pull-Ups', sets: 4, reps: '4–6', note: '24kg belt. Full hang, chin over bar. King of the session.' },
+      { label: 'BLOCK A', type: 'Superset: Pull Anchor + Isometric', exercises: [
+        { id: 'sat_a1', prefix: 'A', name: 'Weighted Pull-Ups', sets: 4, reps: '4–6', note: '24kg belt. Full hang, chin over bar. King of the session.' },
+        { id: 'sat_b2', prefix: 'B', name: 'Wall Sit + Ankle Raise', sets: 3, reps: '40s', note: 'Isometric. Active rest between pull-up sets.' },
       ]},
-      { label: 'BLOCK B', type: 'Superset: Squat + Isometric', exercises: [
-        { id: 'sat_b1', prefix: 'A', name: 'Barbell Squat', sets: 3, reps: '6–8', note: 'Lower anchor. Add a rep or 5 lbs vs last week.' },
-        { id: 'sat_b2', prefix: 'B', name: 'Wall Sit + Ankle Raise', sets: 3, reps: '40s', note: 'Isometric. Lower active while upper recovers.' },
+      { label: 'BLOCK B', type: 'Squat Anchor — Standalone', exercises: [
+        { id: 'sat_b1', prefix: '', name: 'Barbell Squat', sets: 3, reps: '6–8', note: 'Only heavy bilateral squat all week. Add a rep or 5 lbs vs last week.' },
       ]},
-      { label: 'BLOCK C', type: 'Superset: KB Skill + Rotational Pull', exercises: [
+      { label: 'BLOCK C', type: 'Superset: KB Skill + Rotational Push', exercises: [
         { id: 'sat_c3', prefix: 'A', name: 'KB Turkish Get-Up (Floor Phase)', sets: 3, reps: '3/side', note: 'Skill work. Slow, controlled. Press up, hips up.' },
-        { id: 'sat_c1', prefix: 'B', name: 'Kneeling Single Arm Cable Row + Rotation', sets: 3, reps: '10/side', note: 'Athletic pull. Anti-rotation demand.' },
-      ]},
-      { label: 'BLOCK D', type: 'Superset: Push + Rotational Press', exercises: [
-        { id: 'sat_d3', prefix: 'A', name: 'Weighted Dips', sets: 3, reps: '6–8', note: 'Push balance to pull-ups. Slight forward lean.' },
         { id: 'sat_d4', prefix: 'B', name: 'Landmine Rotational Press', sets: 3, reps: '8/side', note: 'Rotational push. Direct serve carry-over.' },
       ]},
-      { label: 'BLOCK E', type: 'Superset: Rear Delt + Core', exercises: [
+      { label: 'BLOCK D', type: 'Superset: Rear Delt + Calves', exercises: [
         { id: 'sat_d1', prefix: 'A', name: 'Face Pull', sets: 3, reps: '12–15', note: 'Rotator cuff. Post-tennis essential.' },
-        { id: 'sat_d2', prefix: 'B', name: 'Plank', sets: 3, reps: '45–60s', note: 'Core finisher.' },
+        { id: 'sat_d4b', prefix: 'B', name: 'Calf Raise (Weighted)', sets: 3, reps: '15', note: 'Only calf slot this week — protect it.' },
       ]},
     ]
   },
   SUN: { type: 'rest' }
 };
 
-function getProgram(w){ return PROGRAM; }
+function getProgram(w){ return PROGRAMS[PID()].schedule; }
+
+// ═══ UPPER / LOWER — 2 upper + 2 lower · 45–50 min ═══
+const UPPER_LOWER_SCHEDULE = {
+  MON: {
+    title: 'Lower Body 1 — Power & Single Leg',
+    subtitle: 'Main Gym · ~45–50 min · Plyos first · KB Swing anchor',
+    note: 'Plyos while CNS is fresh. Explosive hip extension, then single-leg strength.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Plyometrics — Superset', exercises: [
+        { id: 'ul_mon_a1', prefix: 'A', name: 'Single Leg Box Step-Up with Jump', sets: 3, reps: '5/side', note: 'Explosive. Reset each rep.' },
+        { id: 'ul_mon_a2', prefix: 'B', name: 'Single Leg Lateral Bound', sets: 3, reps: '5/side', note: 'Stick the landing. Absorb with control.' },
+      ]},
+      { label: 'BLOCK B', type: 'Power Anchor — Standalone', exercises: [
+        { id: 'ul_mon_b1', prefix: '', name: 'Heavy KB Swing', sets: 4, reps: '8', note: 'Hip hinge. Explosive. Not a squat.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: Single Leg Strength + Isometric', exercises: [
+        { id: 'ul_mon_c1', prefix: 'A', name: 'Landmine Single Leg Squat', sets: 3, reps: '6/side', note: 'Control the descent. Knee tracks toe.' },
+        { id: 'ul_mon_c2', prefix: 'B', name: 'Single Leg Wall Sit', sets: 3, reps: '30–40s/side', note: 'Active rest. Quad + knee stability.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Rotational + Calves', exercises: [
+        { id: 'ul_mon_d1', prefix: 'A', name: 'KB Cossack Squat + Rotation', sets: 3, reps: '8/side', note: 'Lateral + rotational. Tennis carry-over.' },
+        { id: 'ul_mon_d2', prefix: 'B', name: 'Bent Leg Calf Raise', sets: 3, reps: '12–15', note: 'Pause at stretch and top. Soleus emphasis.' },
+      ]},
+      { label: 'BLOCK E', type: 'Core — Standalone', exercises: [
+        { id: 'ul_mon_e1', prefix: '', name: 'Ab Wheel Rollout', sets: 3, reps: '8–10', note: 'Full extension. Don\u2019t let lower back sag.' },
+      ]},
+    ]
+  },
+  TUE: {
+    title: 'Upper Body 1 — Push Focus',
+    subtitle: 'Main Gym · ~45–50 min · DB Bench anchor',
+    note: 'Push-dominant with antagonist pulls woven in for shoulder health.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Horizontal Push Anchor — Standalone', exercises: [
+        { id: 'ul_tue_a1', prefix: '', name: 'DB Bench Press', sets: 4, reps: '6–8', note: 'Main lift. Full focus.' },
+      ]},
+      { label: 'BLOCK B', type: 'Superset: Vertical Push + Vertical Pull', exercises: [
+        { id: 'ul_tue_b1', prefix: 'A', name: 'KB Shoulder Press', sets: 3, reps: '8–10', note: 'Rotate wrists naturally through range.' },
+        { id: 'ul_tue_b2', prefix: 'B', name: 'Neutral Grip Lat Pulldown', sets: 3, reps: '8–10', note: 'Antagonist pull. Shoulder health.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: Chest + Rear Delt', exercises: [
+        { id: 'ul_tue_c1', prefix: 'A', name: 'Cable Chest Fly', sets: 3, reps: '10–12', note: 'Stretch focused. Second chest hit.' },
+        { id: 'ul_tue_c2', prefix: 'B', name: 'Rear Delt Cable Fly', sets: 3, reps: '12–15', note: 'Scapula retraction. Shoulder health.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Horizontal Pull + Core', exercises: [
+        { id: 'ul_tue_d1', prefix: 'A', name: 'Gorilla Row', sets: 3, reps: '8/side', note: 'Horizontal pull. Back balance.' },
+        { id: 'ul_tue_d2', prefix: 'B', name: 'KB Kneeling Oblique Shift', sets: 3, reps: '8/side', note: 'Rotational core. Tennis carry-over.' },
+      ]},
+      { label: 'BLOCK E', type: 'KB Complex — Standalone', exercises: [
+        { id: 'ul_tue_e1', prefix: '', name: 'KB Curl → Front Press → Overhead Tricep', sets: 3, reps: '6–8', note: 'Bicep + shoulder + tricep flow.' },
+      ]},
+    ]
+  },
+  WED: { type: 'rowing', title: 'VO2 Max', subtitle: 'Main Gym · ~40 min · 4x4 Rowing Intervals' },
+  THU: {
+    title: 'Lower Body 2 — Strength & Posterior',
+    subtitle: 'Main Gym · ~45–50 min · Barbell Squat anchor',
+    note: 'Heavy squat first. Hamstring and adductor work to protect the right leg.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Strength Anchor — Standalone', exercises: [
+        { id: 'ul_thu_a1', prefix: '', name: 'Barbell Squat', sets: 4, reps: '5–6', note: 'Progressive overload. Heavy but not grinding.' },
+      ]},
+      { label: 'BLOCK B', type: 'Superset: Hinge + Adductor Isometric', exercises: [
+        { id: 'ul_thu_b1', prefix: 'A', name: 'KB Split Stance RDL', sets: 3, reps: '10/side', note: '3s eccentric on right hamstring.' },
+        { id: 'ul_thu_b2', prefix: 'B', name: 'Copenhagen Plank Hold', sets: 3, reps: '30–35s/side', note: 'Adductor stability. Knee health.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: Single Leg Mobility + Isometric', exercises: [
+        { id: 'ul_thu_c1', prefix: 'A', name: 'KB Kneeling Get-Up', sets: 3, reps: '4/side', note: 'Controlled descent and ascent. KB racked.' },
+        { id: 'ul_thu_c2', prefix: 'B', name: 'Single Leg Lunge Hold on Toes', sets: 3, reps: '30–40s/side', note: 'Knee stability isometric.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Posterior Chain + Calves', exercises: [
+        { id: 'ul_thu_d1', prefix: 'A', name: 'Nordic Curl', sets: 3, reps: '5–6', note: 'Eccentric hamstring. Right leg focus.' },
+        { id: 'ul_thu_d2', prefix: 'B', name: 'Bent Leg Calf Raise', sets: 3, reps: '12–15', note: 'Pause at stretch and top.' },
+      ]},
+    ]
+  },
+  FRI: { type: 'tennis' },
+  SAT: {
+    title: 'Upper Body 2 — Pull Focus',
+    subtitle: 'Main Gym · ~45–50 min · Weighted Pull-Ups anchor · 24kg belt',
+    note: '⚑ Comes after Friday tennis. If the match was long, drop Block D — never cut Block A or E.',
+    blocks: [
+      { label: 'BLOCK A', type: 'Vertical Pull Anchor — Standalone', exercises: [
+        { id: 'ul_sat_a1', prefix: '', name: 'Weighted Pull-Ups', sets: 4, reps: '4–6', note: '24kg belt. Full hang, chin over bar.' },
+      ]},
+      { label: 'BLOCK B', type: 'Push Anchor — Standalone', exercises: [
+        { id: 'ul_sat_b1', prefix: '', name: 'Weighted Dips', sets: 3, reps: '6–10', note: '28kg. Forward lean. Control descent.' },
+      ]},
+      { label: 'BLOCK C', type: 'Superset: Horizontal Pull + Lateral Delt', exercises: [
+        { id: 'ul_sat_c1', prefix: 'A', name: 'Barbell Row', sets: 3, reps: '6–8', note: 'Core braced. No lower back rounding.' },
+        { id: 'ul_sat_c2', prefix: 'B', name: 'Cable Lateral Raise (Full ROM)', sets: 3, reps: '12–15', note: 'Slow and controlled.' },
+      ]},
+      { label: 'BLOCK D', type: 'Superset: Arms', exercises: [
+        { id: 'ul_sat_d1', prefix: 'A', name: 'Bayesian Bicep Curl', sets: 3, reps: '10–12', note: 'Full stretch at bottom.' },
+        { id: 'ul_sat_d2', prefix: 'B', name: 'Single Arm Cable Tricep Pushdown', sets: 2, reps: '12–15', note: 'Burnout. Drop if running long.' },
+      ]},
+      { label: 'BLOCK E', type: 'Shoulder Health — Standalone', exercises: [
+        { id: 'ul_sat_e1', prefix: '', name: 'Face Pull', sets: 3, reps: '12–15', note: 'Rotator cuff. Post-tennis essential. Don\u2019t skip.' },
+      ]},
+    ]
+  },
+  SUN: { type: 'rest' }
+};
+
+// ═══ PROGRAM REGISTRY — multiple routines, user picks one ═══
+const PROGRAMS = {
+  full_body: {
+    id: 'full_body',
+    name: 'Full Body',
+    tagline: 'KB flows · Power · Strength · 4 days/week',
+    recommendedWeeks: 6,
+    available: true,
+    schedule: FULL_BODY_SCHEDULE,
+  },
+  upper_lower: {
+    id: 'upper_lower',
+    name: 'Upper / Lower',
+    tagline: '2 upper · 2 lower · Strength focus · 4 days/week',
+    recommendedWeeks: 6,
+    available: true,
+    schedule: UPPER_LOWER_SCHEDULE,
+  },
+  kb_only: {
+    id: 'kb_only',
+    name: 'KB Flow',
+    tagline: 'Coming soon',
+    recommendedWeeks: 4,
+    available: false,
+    schedule: null,
+  },
+};
+
+function PID(){ return localStorage.getItem('alberto_active_program') || 'full_body'; }
+function setPID(id){
+  localStorage.setItem('alberto_active_program', id);
+}
+
+function updateProgramLabel(){
+  const el = document.getElementById('programLabel');
+  if (!el) return;
+  const prog = PROGRAMS[PID()];
+  el.textContent = `${prog.name} · Athletic Performance`;
+}
+
+function openProgramPicker(){
+  closeDataMenu();
+  const activeId = PID();
+  let html = `<div class="session-picker-label">Choose your program</div>`;
+  Object.values(PROGRAMS).forEach(p => {
+    const isActive = p.id === activeId;
+    const disabled = !p.available;
+    html += `<div class="program-card ${isActive?'active':''} ${disabled?'disabled':''}"
+      ${disabled ? '' : `onclick="selectProgram('${p.id}')"`}>
+      <div class="program-card-top">
+        <span class="program-card-name">${p.name}</span>
+        ${isActive ? '<span class="program-card-tag">ACTIVE</span>' : (disabled ? '<span class="program-card-tag soon">SOON</span>' : '')}
+      </div>
+      <div class="program-card-tagline">${p.tagline}</div>
+    </div>`;
+  });
+  document.getElementById('ghModalBody').innerHTML = html;
+  document.getElementById('ghModalTitle').textContent = 'Programs';
+  document.getElementById('ghModal').classList.add('open');
+}
+
+function selectProgram(id){
+  const prog = PROGRAMS[id];
+  if (!prog || !prog.available) return;
+  if (id === PID()){ closeGhModal(); return; }
+  const fromName = PROGRAMS[PID()].name;
+  openConfirm({
+    title: 'Switch Program',
+    body: `Switch to <b>${prog.name}</b>?<br><br>Your ${fromName} history stays saved — switch back anytime and pick up where you left off.`,
+    confirmLabel: `Switch to ${prog.name}`,
+    onConfirm: () => doSelectProgram(id),
+    onCancel: openProgramPicker,
+  });
+}
+
+function doSelectProgram(id){
+  setPID(id);
+  MAX_WEEKS = getMaxWeeks();
+  currentWeek = getAutoWeek();
+  closeGhModal();
+  updateProgramLabel();
+  updateWeekLabel();
+  render();
+}
+
+// ── One-time migration: old un-scoped keys → 'full_body'-scoped keys ─────────
+// Old format:  alberto_w1_MON_...        →  alberto_full_body_w1_MON_...
+// Globals left untouched: alberto_theme, alberto_active_program, alberto_migrated_v2
+const GLOBAL_KEYS = new Set(['alberto_theme','alberto_active_program','alberto_migrated_v2']);
+function migrateToProgramScopedKeys(){
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+  keys.forEach(k => {
+    if (!k || !k.startsWith('alberto_')) return;
+    if (GLOBAL_KEYS.has(k)) return;
+    // Already scoped (matches alberto_<programid>_...) — skip
+    const scopedPrefixes = Object.keys(PROGRAMS).map(id => `alberto_${id}_`);
+    if (scopedPrefixes.some(p => k.startsWith(p))) return;
+    const val = localStorage.getItem(k);
+    const newKey = k.replace('alberto_', 'alberto_full_body_');
+    if (localStorage.getItem(newKey) === null) localStorage.setItem(newKey, val);
+    localStorage.removeItem(k);
+  });
+}
 
 const PULLEY_EXERCISES = new Set([
-  'Cable Chest Fly','Cable Lateral Raise (Full ROM)','Face Pull',
-  'Kneeling Single Arm Cable Row + Rotation','Neutral Grip Lat Pulldown',
+  'Face Pull', 'Seated Cable Row',
+  // Upper/Lower
+  'Cable Chest Fly', 'Rear Delt Cable Fly', 'Cable Lateral Raise (Full ROM)',
+  'Bayesian Bicep Curl', 'Single Arm Cable Tricep Pushdown', 'Neutral Grip Lat Pulldown',
 ]);
 
 // Isometric and hold exercises — log time in seconds, not reps
@@ -823,15 +1145,17 @@ const TIME_BASED_EXERCISES = new Set([
   'Single Leg Wall Sit',
   'Wall Sit + Ankle Raise',
   'Copenhagen Plank Hold',
-  'Plank',
 ]);
 
-// Plyometric exercises — log reps only, no weight
+// Plyometric / bodyweight exercises — log reps only, no weight
 const REPS_ONLY_EXERCISES = new Set([
   'Kneeling → Jump → Deep Squat',
   'Ab Wheel Rollout',
   'Hanging Leg Raise',
   'Nordic Curl',
+  // Upper/Lower
+  'Single Leg Box Step-Up with Jump',
+  'Single Leg Lateral Bound',
 ]);
 
 // Weighted isometric holds — log weight + seconds
@@ -845,17 +1169,17 @@ let currentDay = 0;
 let currentView = 'tracker';
 
 // Dynamic week count — open-ended. Stored so it persists.
-function getMaxWeeks(){ return parseInt(localStorage.getItem('alberto_maxweeks') || '4'); }
-function setMaxWeeks(n){ localStorage.setItem('alberto_maxweeks', n); }
+function getMaxWeeks(){ return parseInt(localStorage.getItem(`alberto_${PID()}_maxweeks`) || '4'); }
+function setMaxWeeks(n){ localStorage.setItem(`alberto_${PID()}_maxweeks`, n); }
 let MAX_WEEKS = getMaxWeeks();
 
 /* ---------- Storage helpers (keys preserved from v1) ---------- */
-function getFatigueKey(w,d,e){ return `alberto_w${w}_${d}_${e}_fatigue`; }
+function getFatigueKey(w,d,e){ return `alberto_${PID()}_w${w}_${d}_${e}_fatigue`; }
 function getFatigue(w,d,e){ return localStorage.getItem(getFatigueKey(w,d,e)) || ''; }
 function setFatigue(w,d,e,v){ localStorage.setItem(getFatigueKey(w,d,e),v); render(); }
 
 // Per-set fatigue
-function getSetFatigueKey(w,d,e,s){ return `alberto_w${w}_${d}_${e}_s${s}_fat`; }
+function getSetFatigueKey(w,d,e,s){ return `alberto_${PID()}_w${w}_${d}_${e}_s${s}_fat`; }
 function getSetFatigue(w,d,e,s){ return localStorage.getItem(getSetFatigueKey(w,d,e,s)) || ''; }
 function cycleSetFatigue(d,e,s){
   const cur = getSetFatigue(currentWeek,d,e,s);
@@ -865,7 +1189,7 @@ function cycleSetFatigue(d,e,s){
   render();
 }
 
-function getDpKey(w,e){ return `alberto_w${w}_dp_${e}`; }
+function getDpKey(w,e){ return `alberto_${PID()}_w${w}_dp_${e}`; }
 function getDp(e){ return localStorage.getItem(getDpKey(currentWeek,e)) === '1'; }
 function toggleDp(e){
   const key = getDpKey(currentWeek,e);
@@ -874,70 +1198,146 @@ function toggleDp(e){
   render();
 }
 
-function getExUnitKey(d,e){ return `alberto_${d}_${e}_unit`; }
+function getExUnitKey(d,e){ return `alberto_${PID()}_${d}_${e}_unit`; }
 function getExUnit(d,e){ return localStorage.getItem(getExUnitKey(d,e)) || 'kg'; }
 function setExUnit(d,e,u){ localStorage.setItem(getExUnitKey(d,e),u); render(); }
 
-function storageKey(w,d,e,s,f){ return `alberto_w${w}_${d}_${e}_s${s}_${f}`; }
+function storageKey(w,d,e,s,f){ return `alberto_${PID()}_w${w}_${d}_${e}_s${s}_${f}`; }
 function saveValue(w,d,e,s,f,v){ localStorage.setItem(storageKey(w,d,e,s,f),v); }
 function loadValue(w,d,e,s,f){ return localStorage.getItem(storageKey(w,d,e,s,f)) || ''; }
 
-function getDayCompletedKey(w,d){ return `alberto_w${w}_${d}_completed`; }
+function getDayCompletedKey(w,d){ return `alberto_${PID()}_w${w}_${d}_completed`; }
 function isDayCompleted(w,d){ return localStorage.getItem(getDayCompletedKey(w,d)) === '1'; }
 function setDayCompleted(w,d){ localStorage.setItem(getDayCompletedKey(w,d),'1'); }
 
-function getSessionNoteKey(w,d){ return `alberto_w${w}_${d}_note`; }
+function getSessionNoteKey(w,d){ return `alberto_${PID()}_w${w}_${d}_note`; }
 function getSessionNote(w,d){ return localStorage.getItem(getSessionNoteKey(w,d)) || ''; }
 function saveSessionNote(d,v){ localStorage.setItem(getSessionNoteKey(currentWeek,d),v); }
 
 // ── Deload mode ──────────────────────────────────────────────────────────────
-function isDeloadActive(w){ return localStorage.getItem(`alberto_w${w}_deload`) === '1'; }
+function isDeloadActive(w){ return localStorage.getItem(`alberto_${PID()}_w${w}_deload`) === '1'; }
 
-function resetProgramStart(){
-  if (!confirm('This resets week tracking to start from this Monday (week 1). Your logged data stays. Continue?')) return;
-  const monday = getCalendarMonday(new Date());
-  localStorage.setItem(getProgramStartKey(), monday.toISOString());
-  MAX_WEEKS = getMaxWeeks();
-  currentWeek = 1;
-  updateWeekLabel();
+function openStartDateEditor(){
   closeDataMenu();
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const fmt = d => d.toLocaleDateString('en-US',{ month:'short', day:'numeric' });
+  const cur = localStorage.getItem(getProgramStartKey());
+  const curMon = cur ? new Date(cur) : getCalendarMonday(new Date());
+  const thisMon = getCalendarMonday(new Date());
+  const nextMon = new Date(thisMon); nextMon.setDate(nextMon.getDate() + 7);
+  document.getElementById('ghModalBody').innerHTML = `
+    <p class="modal-desc">Week 1 begins on the Monday you pick. Nothing is deleted — this only changes which week the app shows.</p>
+    <button class="modal-btn" onclick="setStartDate('${iso(thisMon)}')">This Monday — ${fmt(thisMon)}</button>
+    <button class="modal-btn" onclick="setStartDate('${iso(nextMon)}')">Next Monday — ${fmt(nextMon)}</button>
+    <div class="session-picker-label" style="margin-top:var(--s4)">Or pick a date</div>
+    <input type="date" class="notes-input" id="startDateInput"
+           style="min-height:0;padding:11px 12px" value="${iso(curMon)}">
+    <button class="modal-btn primary" style="margin-top:var(--s2)"
+            onclick="setStartDate(document.getElementById('startDateInput').value)">Set start date</button>
+  `;
+  document.getElementById('ghModalTitle').textContent = 'Program Start';
+  document.getElementById('ghModal').classList.add('open');
+}
+
+function setStartDate(dateStr){
+  if (!dateStr) return;
+  const picked = new Date(dateStr + 'T00:00:00');
+  if (isNaN(picked.getTime())) return;
+  const monday = getCalendarMonday(picked);
+  localStorage.setItem(getProgramStartKey(), monday.toISOString());
+  currentWeek = getAutoWeek();
+  MAX_WEEKS = getMaxWeeks();
+  if (currentWeek > MAX_WEEKS){ MAX_WEEKS = currentWeek; setMaxWeeks(MAX_WEEKS); }
+  hapticTick();
+  closeGhModal();
+  updateWeekLabel();
   render();
 }
 
 function startFresh(){
-  if (!confirm('Start from scratch? This clears ALL logged weeks — sets, notes, completions, recovery checks. PRs, coach notes, and unit preferences are kept. Export a backup first if you want to archive your history. Continue?')) return;
+  const progName = PROGRAMS[PID()].name;
+  closeDataMenu();
+  openConfirm({
+    title: 'Start Fresh',
+    body: `Clears every logged week for <b>${progName}</b> — sets, reps, notes, completions and recovery checks.`
+        + `<br><br><b>Kept:</b> PRs, exercise notes, kg/lbs preferences.`
+        + `<br><b>Untouched:</b> your other programs.`
+        + `<br><br>Export a backup first if you want to archive this history.`,
+    confirmLabel: `Clear ${progName} history`,
+    danger: true,
+    onConfirm: doStartFresh,
+    onCancel: openDataMenu,
+  });
+}
+
+function doStartFresh(){
   const doomed = [];
+  const prefix = `alberto_${PID()}_w`;
   for (let i = 0; i < localStorage.length; i++){
     const k = localStorage.key(i);
-    if (/^alberto_w\d+_/.test(k)) doomed.push(k);
+    if (k && k.startsWith(prefix) && /^alberto_[a-z_]+_w\d+_/.test(k)) doomed.push(k);
   }
   doomed.forEach(k => localStorage.removeItem(k));
   const monday = getCalendarMonday(new Date());
   localStorage.setItem(getProgramStartKey(), monday.toISOString());
-  localStorage.setItem('alberto_maxweeks', '4');
+  setMaxWeeks(4);
   MAX_WEEKS = 4;
   currentWeek = 1;
   updateWeekLabel();
-  closeDataMenu();
   render();
-}function toggleDeload(w){
-  const key = `alberto_w${w}_deload`;
+}
+
+function toggleDeload(w){
+  const key = `alberto_${PID()}_w${w}_deload`;
   if (localStorage.getItem(key) === '1') localStorage.removeItem(key);
   else { localStorage.setItem(key, '1'); hapticTick(); }
   render();
 }
 
 // ── Coaching notes (user-added, per exercise) ───────────────────────────────
-function coachNoteKey(d,e){ return `alberto_coachnote_${d}_${e}`; }
+function coachNoteKey(d,e){ return `alberto_${PID()}_coachnote_${d}_${e}`; }
 function getCoachNote(d,e){ return localStorage.getItem(coachNoteKey(d,e)) || ''; }
 function saveCoachNote(d,e,v){
   if (v && v.trim()) localStorage.setItem(coachNoteKey(d,e), v.trim());
   else localStorage.removeItem(coachNoteKey(d,e));
 }
+let noteTarget = null;
 function openNoteEditor(d, e){
+  noteTarget = { d, e };
   const existing = getCoachNote(d, e);
-  const val = prompt('Your note for this exercise:', existing);
-  if (val !== null){ saveCoachNote(d, e, val); render(); }
+  const exName = findExerciseName(d, e);
+  document.getElementById('ghModalBody').innerHTML = `
+    <p class="modal-desc" style="margin-bottom:var(--s3)">${exName}</p>
+    <textarea class="notes-input" id="noteEditorInput" placeholder="Cues, loads, setup reminders…">${existing.replace(/</g,'&lt;')}</textarea>
+    <button class="modal-btn primary" style="margin-top:var(--s3)" onclick="saveNoteFromEditor()">Save note</button>
+    ${existing ? `<button class="modal-btn" onclick="clearNoteFromEditor()">Delete note</button>` : ''}
+  `;
+  document.getElementById('ghModalTitle').textContent = 'Exercise Note';
+  document.getElementById('ghModal').classList.add('open');
+  setTimeout(() => {
+    const ta = document.getElementById('noteEditorInput');
+    if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }, 180);
+}
+function saveNoteFromEditor(){
+  if (!noteTarget) return;
+  const ta = document.getElementById('noteEditorInput');
+  saveCoachNote(noteTarget.d, noteTarget.e, ta ? ta.value : '');
+  hapticTick();
+  closeGhModal(); render();
+}
+function clearNoteFromEditor(){
+  if (!noteTarget) return;
+  saveCoachNote(noteTarget.d, noteTarget.e, '');
+  closeGhModal(); render();
+}
+function findExerciseName(d, exId){
+  const day = getProgram(currentWeek)[d];
+  if (!day || !day.blocks) return '';
+  for (const b of day.blocks){
+    for (const ex of b.exercises){ if (ex.id === exId) return ex.name; }
+  }
+  return '';
 }
 
 // ── Exercise swap (per day/week only) ───────────────────────────────────────
@@ -949,7 +1349,7 @@ const SWAP_OPTIONS = [
   'Leg Curl','Leg Extension','Calf Raise','Hanging Leg Raise','Cable Crunch',
   'KB Swing','Box Jump','Med Ball Slam','Farmer Carry','Plank',
 ];
-function swapKey(w,d,e){ return `alberto_w${w}_${d}_swap_${e}`; }
+function swapKey(w,d,e){ return `alberto_${PID()}_w${w}_${d}_swap_${e}`; }
 function getSwappedExercise(d, exOrig){
   const swapName = localStorage.getItem(swapKey(currentWeek, d, exOrig.id));
   if (!swapName) return exOrig;
@@ -976,12 +1376,12 @@ function clearSwap(){
   closeGhModal(); render();
 }
 
-function getSetCountKey(w,d,e){ return `alberto_w${w}_${d}_${e}_setcount`; }
+function getSetCountKey(w,d,e){ return `alberto_${PID()}_w${w}_${d}_${e}_setcount`; }
 function getSetCount(w,d,e,def){ const s = localStorage.getItem(getSetCountKey(w,d,e)); return s ? parseInt(s) : def; }
 function setSetCount(w,d,e,c){ localStorage.setItem(getSetCountKey(w,d,e),c); }
 
 // PR tracking — all-time best weight per exercise
-function getPRKey(d,e){ return `alberto_pr_${d}_${e}`; }
+function getPRKey(d,e){ return `alberto_${PID()}_pr_${d}_${e}`; }
 function getPR(d,e){ const v = localStorage.getItem(getPRKey(d,e)); return v ? parseFloat(v) : null; }
 function checkAndSetPR(d,e,weight){
   const cur = getPR(d,e);
@@ -998,8 +1398,69 @@ function isCurrentWeightPR(d,e,weight){
 }
 
 /* ---------- Data backup ---------- */
-function openDataMenu(){ document.getElementById('dataModal').classList.add('open'); document.getElementById('modalStatus').textContent=''; }
+function openDataMenu(){
+  const prog = PROGRAMS[PID()];
+  const startISO = localStorage.getItem(getProgramStartKey());
+  const startTxt = startISO
+    ? new Date(startISO).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+    : 'Not set';
+  document.getElementById('settingsBody').innerHTML = `
+    <div class="settings-group">
+      <div class="settings-label">Program</div>
+      <button class="settings-row" onclick="openProgramPicker()">
+        <span class="settings-row-name">Active program</span>
+        <span class="settings-row-val">${prog.name} ›</span>
+      </button>
+      <button class="settings-row" onclick="openStartDateEditor()">
+        <span class="settings-row-name">Week 1 starts</span>
+        <span class="settings-row-val">${startTxt} ›</span>
+      </button>
+    </div>
+    <div class="settings-group">
+      <div class="settings-label">Data</div>
+      <button class="settings-row" onclick="exportData()">
+        <span class="settings-row-name">Export backup</span>
+        <span class="settings-row-val">↓ file</span>
+      </button>
+      <button class="settings-row" onclick="document.getElementById('importFile').click()">
+        <span class="settings-row-name">Import backup</span>
+        <span class="settings-row-val">↑ file</span>
+      </button>
+      <button class="settings-row danger" onclick="startFresh()">
+        <span class="settings-row-name">Start fresh</span>
+        <span class="settings-row-val">Clear ${prog.name} ›</span>
+      </button>
+    </div>
+    <div class="modal-status" id="modalStatus"></div>
+  `;
+  document.getElementById('dataModal').classList.add('open');
+}
 function closeDataMenu(){ document.getElementById('dataModal').classList.remove('open'); }
+
+// ── Reusable in-app confirm (replaces browser confirm()) ─────────────────────
+let confirmState = null;
+function openConfirm(opts){
+  confirmState = opts;
+  document.getElementById('ghModalBody').innerHTML = `
+    <p class="modal-desc">${opts.body}</p>
+    <button class="modal-btn ${opts.danger ? 'danger' : 'primary'}" onclick="runConfirm()">${opts.confirmLabel || 'Confirm'}</button>
+    <button class="modal-btn" onclick="cancelConfirm()">Cancel</button>
+  `;
+  document.getElementById('ghModalTitle').textContent = opts.title;
+  document.getElementById('ghModal').classList.add('open');
+}
+function runConfirm(){
+  const fn = confirmState && confirmState.onConfirm;
+  confirmState = null;
+  closeGhModal();
+  if (fn) fn();
+}
+function cancelConfirm(){
+  const fn = confirmState && confirmState.onCancel;
+  confirmState = null;
+  closeGhModal();
+  if (fn) fn();
+}
 
 function exportData(){
   const data = {};
@@ -1030,6 +1491,8 @@ function importData(file){
       Object.keys(data).forEach(k => {
         if (k.startsWith('alberto_')){ localStorage.setItem(k, data[k]); count++; }
       });
+      MAX_WEEKS = getMaxWeeks();
+      migrateToProgramScopedKeys();
       MAX_WEEKS = getMaxWeeks();
       document.getElementById('modalStatus').textContent = `✓ Restored ${count} entries`;
       updateThemeBtn(); updateWeekLabel(); render();
@@ -1294,7 +1757,7 @@ const RECOVERY_ROUTINE = [
   ]},
 ];
 
-function recoveryCheckKey(w, blockIdx, itemIdx){ return `alberto_w${w}_recovery_b${blockIdx}_i${itemIdx}`; }
+function recoveryCheckKey(w, blockIdx, itemIdx){ return `alberto_${PID()}_w${w}_recovery_b${blockIdx}_i${itemIdx}`; }
 function isRecoveryChecked(w, b, i){ return localStorage.getItem(recoveryCheckKey(w,b,i)) === '1'; }
 function toggleRecoveryItem(b, i){
   const key = recoveryCheckKey(currentWeek, b, i);
@@ -1339,7 +1802,7 @@ function renderRecovery(container, dayKey){
 }
 
 function renderRowing(container, dayKey){
-  const saved = JSON.parse(localStorage.getItem(`alberto_w${currentWeek}_WED_rowing`) || '{}');
+  const saved = JSON.parse(localStorage.getItem(`alberto_${PID()}_w${currentWeek}_WED_rowing`) || '{}');
   const isComplete = isDayCompleted(currentWeek, 'WED');
   const fields = [
     { key:'time', label:'Time Spent', placeholder:'e.g. 42:30', unit:'min' },
@@ -1374,7 +1837,7 @@ function renderRowing(container, dayKey){
 }
 
 function saveRowingField(key, value){
-  const k = `alberto_w${currentWeek}_WED_rowing`;
+  const k = `alberto_${PID()}_w${currentWeek}_WED_rowing`;
   const ex = JSON.parse(localStorage.getItem(k) || '{}');
   ex[key] = value; localStorage.setItem(k, JSON.stringify(ex));
 }
@@ -1428,17 +1891,16 @@ const LINE_COLORS = ['#a78bfa','#5b8def','#f06ec0','#f0a85b','#4dd6b0','#e8645a'
 function allExercises(){
   const list = [];
   const seen = new Set();
-  [PROGRAM].forEach(prog => {
-    DAYS.forEach(d => {
-      const day = prog[d];
-      if (!day || day.type) return;
-      day.blocks.forEach(b => b.exercises.forEach(ex => {
-        const key = `${d}|${ex.id}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        list.push({ key, day: d, exId: ex.id, name: ex.name });
-      }));
-    });
+  const prog = getProgram(currentWeek);
+  DAYS.forEach(d => {
+    const day = prog[d];
+    if (!day || day.type) return;
+    day.blocks.forEach(b => b.exercises.forEach(ex => {
+      const key = `${d}|${ex.id}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      list.push({ key, day: d, exId: ex.id, name: ex.name });
+    }));
   });
   return list;
 }
@@ -1670,7 +2132,7 @@ function renderRowingProgress(){
   const fm = ROWING_FIELDS_META;
   const weeks = [];
   for (let w=1; w<=MAX_WEEKS; w++){
-    const saved = JSON.parse(localStorage.getItem(`alberto_w${w}_WED_rowing`) || '{}');
+    const saved = JSON.parse(localStorage.getItem(`alberto_${PID()}_w${w}_WED_rowing`) || '{}');
     weeks.push({ week: w, ...saved });
   }
   const hasAny = weeks.some(w => w[rowingProgressMetric]);
@@ -1766,20 +2228,29 @@ function renderHistory(data, unit){
 }
 
 /* ---------- Master render ---------- */
+let _lastCtx = '';
 function render(){
   renderTabs();
   renderWeekSummary();
   renderDay();
   if (currentView === 'progress') renderProgress();
+  // Entrance animation fires only when day/week/program changes —
+  // not on every in-session tap (fatigue, dp, add set), which would be jarring.
+  const ctx = `${PID()}|${currentWeek}|${currentDay}`;
+  if (ctx !== _lastCtx){
+    _lastCtx = ctx;
+    const el = document.getElementById('dayContent');
+    if (el){ el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); }
+  }
 }
 
 // ── Modal helper (used by swap + share) ─────────────────────────────────────
 
 function closeGhModal(){
   document.getElementById("ghModal").classList.remove("open");
-  const titleEl = document.getElementById("ghModalTitle");
-  if (titleEl) titleEl.textContent = "";
   swapTarget = null;
+  noteTarget = null;
+  confirmState = null;
 }
 
 // ── Share session ────────────────────────────────────────────────────────────
@@ -1817,14 +2288,18 @@ function buildSessionSummary(dayKey){
 
 function openShareMenu(dayKey){
   const summary = buildSessionSummary(dayKey);
-  if (!summary.lines.length){ alert('No sets logged to share.'); return; }
   shareCurrentDay = dayKey;
-  let html = `<div class="share-options">
-    <div class="session-picker-label">Share as</div>
-    <button class="modal-btn primary" onclick="shareAsText('${dayKey}')">📋 Copy as text</button>
-    <button class="modal-btn" onclick="shareAsImage('${dayKey}')">🖼️ Generate image</button>
-    <div id="shareResult"></div>
-  </div>`;
+  let html;
+  if (!summary.lines.length){
+    html = `<p class="modal-desc">No sets logged for this session yet — log some work first, then share it.</p>`;
+  } else {
+    html = `<div class="share-options">
+      <div class="session-picker-label">Share as</div>
+      <button class="modal-btn primary" onclick="shareAsText('${dayKey}')">📋 Copy as text</button>
+      <button class="modal-btn" onclick="shareAsImage('${dayKey}')">🖼️ Generate image</button>
+      <div id="shareResult"></div>
+    </div>`;
+  }
   document.getElementById('ghModalBody').innerHTML = html;
   document.getElementById('ghModalTitle').textContent = 'Share Session';
   document.getElementById('ghModal').classList.add('open');
@@ -1928,7 +2403,7 @@ function shareAsImage(dayKey){
 
 // ── Auto week calculation ─────────────────────────────────────────────────────
 // Stores the Monday of week 1. Each Monday the week auto-advances.
-function getProgramStartKey(){ return 'alberto_program_start'; }
+function getProgramStartKey(){ return `alberto_${PID()}_program_start`; }
 
 function getCalendarMonday(date){
   const d = new Date(date);
@@ -1948,9 +2423,9 @@ function getAutoWeek(){
     let maxWeek = 1;
     for (let i = 1; i <= 52; i++){
       const hasData = DAYS.some(d =>
-        localStorage.getItem(`alberto_w${i}_${d}_completed`) === '1' ||
-        localStorage.getItem(`alberto_w${i}_WED_rowing`) ||
-        localStorage.getItem(`alberto_w${i}_${d}_note`)
+        localStorage.getItem(`alberto_${PID()}_w${i}_${d}_completed`) === '1' ||
+        localStorage.getItem(`alberto_${PID()}_w${i}_WED_rowing`) ||
+        localStorage.getItem(`alberto_${PID()}_w${i}_${d}_note`)
       );
       if (hasData) maxWeek = i;
       else if (i > maxWeek + 2) break; // stop if 3 empty weeks in a row
@@ -1969,6 +2444,11 @@ function getAutoWeek(){
 }
 
 // init
+if (localStorage.getItem('alberto_migrated_v2') !== '1'){
+  migrateToProgramScopedKeys();
+  localStorage.setItem('alberto_migrated_v2', '1');
+}
+
 const today = new Date().getDay();
 const dayMap = [6,0,1,2,3,4,5];
 currentDay = dayMap[today];
@@ -1979,6 +2459,7 @@ currentWeek = autoWeek;
 
 updateThemeBtn();
 updateWeekLabel();
+updateProgramLabel();
 render();
 </script>
 </body>
