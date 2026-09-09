@@ -833,8 +833,8 @@ const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'
 const FULL_BODY_SCHEDULE = {
   MON: {
     title: 'Full Body 1 — Power & Pull',
-    subtitle: 'Main Gym · ~45 min · Plyos first · KB Swing anchor',
-    note: 'Plyos while CNS is fresh. Heavy KB Swing for explosive power — no lower back deadlift loading.',
+    subtitle: 'Main Gym · ~50 min · Plyos first · Two power anchors',
+    note: 'Plyos while CNS is fresh. Pull block separates the two heavy explosive lifts.',
     blocks: [
       { label: 'BLOCK A', type: 'Plyometrics — Superset', exercises: [
         { id: 'mon_a1', prefix: 'A', name: 'Kneeling → Jump → Deep Squat', sets: 3, reps: '3', note: 'Full reset between reps. Explosive intent.' },
@@ -847,7 +847,10 @@ const FULL_BODY_SCHEDULE = {
         { id: 'mon_d1', prefix: 'A', name: 'Weighted Chin-Ups', sets: 3, reps: '5–6', note: '12–16kg. Full hang at bottom. Hits biceps too.' },
         { id: 'mon_e2', prefix: 'B', name: 'Single Leg Wall Sit', sets: 3, reps: '30–40s/side', note: 'Isometric. Addresses asymmetry. Active rest between pull sets.' },
       ]},
-      { label: 'BLOCK D', type: 'Superset: KB Flow + Core', exercises: [
+      { label: 'BLOCK D', type: 'Full Body Power — Standalone', exercises: [
+        { id: 'mon_d3', prefix: '', name: 'Gravedigger', sets: 3, reps: '6', note: 'Heavy DB, sumo squat, clean to alternating shoulders. Left + right = 1 rep.' },
+      ]},
+      { label: 'BLOCK E', type: 'Superset: KB Flow + Core', exercises: [
         { id: 'mon_d2', prefix: 'A', name: 'KB Halo', sets: 3, reps: '8/side', note: 'Shoulder mobility and core. Low fatigue finisher.' },
         { id: 'mon_e1', prefix: 'B', name: 'Ab Wheel Rollout', sets: 3, reps: '8–10', note: 'Full extension. Don\u2019t let lower back sag.' },
       ]},
@@ -855,22 +858,26 @@ const FULL_BODY_SCHEDULE = {
   },
   TUE: {
     title: 'Full Body 2 — KB Complexes & Push',
-    subtitle: 'Main Gym · ~45 min · DB Bench anchor',
-    note: 'Dynamic and flowing. One heavy anchor, KB complex, dips to finish strong.',
+    subtitle: 'Main Gym · ~50 min · DB Bench anchor',
+    note: 'Dynamic and flowing. Landmine adds the only overhead press and lower body work of the day.',
     blocks: [
       { label: 'BLOCK A', type: 'Strength Anchor — Standalone', exercises: [
         { id: 'tue_a1', prefix: '', name: 'DB Bench Press', sets: 4, reps: '6–8', note: 'Heavy anchor. Full focus. No superset.' },
       ]},
-      { label: 'BLOCK B', type: 'Superset: Horizontal Pull + Isometric', exercises: [
-        { id: 'tue_b2', prefix: 'A', name: 'Seated Cable Row', sets: 3, reps: '8–10', note: 'Horizontal pull — balances the week\u2019s vertical pull volume.' },
-        { id: 'tue_c2', prefix: 'B', name: 'Single Leg Lunge Hold on Toes', sets: 3, reps: '35s/side', note: 'Stability isometric.' },
+      { label: 'BLOCK B', type: 'Squat + Press — Standalone', exercises: [
+        { id: 'tue_b3', prefix: '', name: 'Landmine Heels-Elevated Squat → Press', sets: 3, reps: '8', note: 'Heels up, landmine at shoulder. Squat, stand, press overhead. Quad + vertical push.' },
       ]},
-      { label: 'BLOCK C', type: 'Superset: KB Complex + Obliques', exercises: [
-        { id: 'tue_c3', prefix: 'A', name: 'KB Curl → Front Press → Overhead Tricep', sets: 3, reps: '8/side', note: 'Full flow. Forearms work together, not against a pull.' },
+      { label: 'BLOCK C', type: 'Superset: Horizontal Pull + Obliques', exercises: [
+        { id: 'tue_b2', prefix: 'A', name: 'Seated Cable Row', sets: 3, reps: '8–10', note: 'Horizontal pull — balances the week\u2019s vertical pull volume.' },
         { id: 'tue_c4', prefix: 'B', name: 'KB Kneeling Oblique Shift', sets: 3, reps: '8/side', note: 'Kneeling, shift KB laterally. Oblique focus.' },
       ]},
-      { label: 'BLOCK D', type: 'Push Finisher — Standalone', exercises: [
-        { id: 'tue_e3', prefix: '', name: 'Weighted Dips', sets: 3, reps: '6–8', note: 'Standalone — go in fresh, push the weight properly.' },
+      { label: 'BLOCK D', type: 'Superset: Push + Isometric', exercises: [
+        { id: 'tue_e3', prefix: 'A', name: 'Weighted Dips', sets: 3, reps: '6–8', note: 'Push strength. Slight forward lean.' },
+        { id: 'tue_c2', prefix: 'B', name: 'Single Leg Lunge Hold on Toes', sets: 3, reps: '35s/side', note: 'Stability isometric. Legs work while push recovers.' },
+      ]},
+      { label: 'BLOCK E', type: 'Superset: Arms + Hamstring', exercises: [
+        { id: 'tue_c3', prefix: 'A', name: 'KB Curl → Front Press → Overhead Tricep', sets: 3, reps: '8/side', note: 'Arms finisher. Full flow, one continuous movement.' },
+        { id: 'tue_e4', prefix: 'B', name: 'Single Leg Curl', sets: 3, reps: '10–12/side', note: 'Medial hamstring volume — protects the pes anserine. Slow eccentric, right leg focus.' },
       ]},
     ]
   },
@@ -914,9 +921,12 @@ const FULL_BODY_SCHEDULE = {
         { id: 'sat_c3', prefix: 'A', name: 'KB Turkish Get-Up (Floor Phase)', sets: 3, reps: '3/side', note: 'Skill work. Slow, controlled. Press up, hips up.' },
         { id: 'sat_d4', prefix: 'B', name: 'Landmine Rotational Press', sets: 3, reps: '8/side', note: 'Rotational push. Direct serve carry-over.' },
       ]},
-      { label: 'BLOCK D', type: 'Superset: Rear Delt + Calves', exercises: [
-        { id: 'sat_d1', prefix: 'A', name: 'Face Pull', sets: 3, reps: '12–15', note: 'Rotator cuff. Post-tennis essential.' },
-        { id: 'sat_d4b', prefix: 'B', name: 'Calf Raise (Weighted)', sets: 3, reps: '15', note: 'Only calf slot this week — protect it.' },
+      { label: 'BLOCK D', type: 'Superset: Unilateral Hinge + Rear Delt', exercises: [
+        { id: 'sat_d5', prefix: 'A', name: 'Single Leg RDL', sets: 3, reps: '8/side', note: 'Only unilateral hinge of the week. 3s eccentric on right leg. Hips square.' },
+        { id: 'sat_d1', prefix: 'B', name: 'Face Pull', sets: 3, reps: '12–15', note: 'Rotator cuff. Post-tennis essential.' },
+      ]},
+      { label: 'BLOCK E', type: 'Calves — Standalone', exercises: [
+        { id: 'sat_d4b', prefix: '', name: 'Calf Raise (Weighted)', sets: 3, reps: '15', note: 'Only calf slot this week — protect it. Pause at stretch and top.' },
       ]},
     ]
   },
