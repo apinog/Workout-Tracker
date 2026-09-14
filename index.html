@@ -1680,8 +1680,9 @@ function renderDay(){
           const rPlaceholder = pr ? pr : 'sec';
           html += `<div class="set-row">
             <span class="set-label">${s+1}</span>
-            <input type="number" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+            <input type="number" inputmode="numeric" enterkeyhint="next" id="in_${dayKey}_${ex.id}_${s}_r" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
               onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              onkeydown="handleInputEnter(event,this)"
               ${completed?'disabled':''}>
             <span class="set-divider" style="opacity:0.4">s</span>
             <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
@@ -1691,8 +1692,9 @@ function renderDay(){
           const rPlaceholder = pr ? pr : 'reps';
           html += `<div class="set-row">
             <span class="set-label">${s+1}</span>
-            <input type="number" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+            <input type="number" inputmode="numeric" enterkeyhint="next" id="in_${dayKey}_${ex.id}_${s}_r" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
               onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              onkeydown="handleInputEnter(event,this)"
               ${completed?'disabled':''}>
             <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
             ${!completed && s===setCount-1 && setCount>1 ? `<button class="remove-set-btn" onclick="removeSet('${dayKey}','${ex.id}',${setCount})" title="Remove set">−</button>` : ''}
@@ -1702,12 +1704,14 @@ function renderDay(){
           const rPlaceholder = pr ? pr : 'sec';
           html += `<div class="set-row">
             <span class="set-label">${s+1}</span>
-            <input type="number" class="set-input ${w?'filled':''} ${!w&&pw?'carryover':''}" placeholder="${wPlaceholder}" value="${w}"
+            <input type="number" inputmode="decimal" enterkeyhint="next" id="in_${dayKey}_${ex.id}_${s}_w" class="set-input ${w?'filled':''} ${!w&&pw?'carryover':''}" placeholder="${wPlaceholder}" value="${w}"
               onchange="saveVal('${dayKey}','${ex.id}',${s},'w',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              onkeydown="handleInputEnter(event,this)"
               ${completed?'disabled':''}>
             <span class="set-divider">×</span>
-            <input type="number" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+            <input type="number" inputmode="numeric" enterkeyhint="next" id="in_${dayKey}_${ex.id}_${s}_r" class="set-input time-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
               onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              onkeydown="handleInputEnter(event,this)"
               ${completed?'disabled':''}>
             <span class="set-divider" style="opacity:0.4">s</span>
             <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
@@ -1718,12 +1722,14 @@ function renderDay(){
           const rPlaceholder = pr ? pr : 'reps';
           html += `<div class="set-row">
             <span class="set-label">${s+1}</span>
-            <input type="number" class="set-input ${w?'filled':''} ${!w&&pw?'carryover':''}" placeholder="${wPlaceholder}" value="${w}"
+            <input type="number" inputmode="decimal" enterkeyhint="next" id="in_${dayKey}_${ex.id}_${s}_w" class="set-input ${w?'filled':''} ${!w&&pw?'carryover':''}" placeholder="${wPlaceholder}" value="${w}"
               onchange="saveVal('${dayKey}','${ex.id}',${s},'w',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              onkeydown="handleInputEnter(event,this)"
               ${completed?'disabled':''}>
             <span class="set-divider">×</span>
-            <input type="number" class="set-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
+            <input type="number" inputmode="numeric" enterkeyhint="next" id="in_${dayKey}_${ex.id}_${s}_r" class="set-input ${r?'filled':''} ${!r&&pr?'carryover':''}" placeholder="${rPlaceholder}" value="${r}"
               onchange="saveVal('${dayKey}','${ex.id}',${s},'r',this.value); this.classList.toggle('filled', !!this.value); this.classList.remove('carryover')"
+              onkeydown="handleInputEnter(event,this)"
               ${completed?'disabled':''}>
             <button class="set-fat ${setFat?'has':''}" onclick="cycleSetFatigue('${dayKey}','${ex.id}',${s})" title="Mark effort" ${completed?'disabled':''}>${setFat || '+'}</button>
             ${isPR ? `<span class="pr-badge" title="Personal Record">PR</span>` : ''}
@@ -1865,6 +1871,21 @@ function saveRowingField(key, value){
 function saveVal(d,e,s,f,v){
   saveValue(currentWeek,d,e,s,f,v);
   if (f === 'w' && v) checkAndSetPR(d,e,parseFloat(v));
+}
+
+// Enter / mobile "Next" key — jump to the next weight/reps field instead of
+// closing the keyboard, so a whole exercise can be logged without tapping around.
+function handleInputEnter(evt, el){
+  if (evt.key !== 'Enter') return;
+  evt.preventDefault();
+  el.blur(); // commits the value (fires onchange) before we move on
+  const inputs = Array.from(document.querySelectorAll('#dayContent .set-input:not(:disabled)'));
+  const idx = inputs.indexOf(el);
+  const next = idx > -1 ? inputs[idx + 1] : null;
+  if (next){
+    next.focus();
+    if (next.select) next.select();
+  }
 }
 function addSet(d,e,c){ setSetCount(currentWeek,d,e,c+1); render(); }
 function removeSet(d,e,c){
