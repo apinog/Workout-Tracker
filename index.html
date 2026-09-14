@@ -1186,8 +1186,6 @@ let MAX_WEEKS = getMaxWeeks();
 /* ---------- Storage helpers (keys preserved from v1) ---------- */
 function getFatigueKey(w,d,e){ return `alberto_${PID()}_w${w}_${d}_${e}_fatigue`; }
 function getFatigue(w,d,e){ return localStorage.getItem(getFatigueKey(w,d,e)) || ''; }
-function setFatigue(w,d,e,v){ localStorage.setItem(getFatigueKey(w,d,e),v); render(); }
-
 // Per-set fatigue
 function getSetFatigueKey(w,d,e,s){ return `alberto_${PID()}_w${w}_${d}_${e}_s${s}_fat`; }
 function getSetFatigue(w,d,e,s){ return localStorage.getItem(getSetFatigueKey(w,d,e,s)) || ''; }
@@ -1221,7 +1219,30 @@ function toggleDp(e){
 
 function getExUnitKey(d,e){ return `alberto_${PID()}_${d}_${e}_unit`; }
 function getExUnit(d,e){ return localStorage.getItem(getExUnitKey(d,e)) || 'kg'; }
-function setExUnit(d,e,u){ localStorage.setItem(getExUnitKey(d,e),u); render(); }
+function setExUnit(d,e,u){
+  localStorage.setItem(getExUnitKey(d,e),u);
+  // Update just this exercise's unit toggle + weight placeholders — a full
+  // render() here rebuilds every input on the page and causes a blank
+  // flash on iOS, same issue as the fatigue/dp buttons.
+  const btn = event && event.currentTarget;
+  const header = btn ? btn.closest('.sets-header') : null;
+  if (header){
+    header.querySelectorAll('.ex-unit-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent.trim().toLowerCase() === u);
+    });
+    const exBlock = header.closest('.ex-inputs');
+    if (exBlock){
+      // id$="_w" targets weight fields only — reps/seconds fields share the
+      // same .set-input class but must never show "kg"/"lbs" as a placeholder.
+      exBlock.querySelectorAll('input[id$="_w"]').forEach((inp, idx) => {
+        const pw = loadValue(currentWeek - 1, d, e, idx, 'w');
+        if (!pw) inp.placeholder = u; // only un-filled fields with no carryover show the unit
+      });
+    }
+  } else {
+    render();
+  }
+}
 
 function storageKey(w,d,e,s,f){ return `alberto_${PID()}_w${w}_${d}_${e}_s${s}_${f}`; }
 function saveValue(w,d,e,s,f,v){ localStorage.setItem(storageKey(w,d,e,s,f),v); }
@@ -1788,9 +1809,19 @@ function recoveryCheckKey(w, blockIdx, itemIdx){ return `alberto_${PID()}_w${w}_
 function isRecoveryChecked(w, b, i){ return localStorage.getItem(recoveryCheckKey(w,b,i)) === '1'; }
 function toggleRecoveryItem(b, i){
   const key = recoveryCheckKey(currentWeek, b, i);
-  if (localStorage.getItem(key) === '1') localStorage.removeItem(key);
-  else { localStorage.setItem(key, '1'); hapticTick(); }
-  render();
+  const willBeChecked = localStorage.getItem(key) !== '1';
+  if (willBeChecked){ localStorage.setItem(key, '1'); hapticTick(); }
+  else localStorage.removeItem(key);
+  // Update just this row — a full render() here would wipe and rebuild
+  // the whole recovery list, causing a visible blank flash on iOS.
+  const row = event && event.currentTarget;
+  if (row){
+    row.classList.toggle('checked', willBeChecked);
+    const check = row.querySelector('.recovery-check');
+    if (check) check.textContent = willBeChecked ? '✓' : '';
+  } else {
+    render();
+  }
 }
 
 function renderRecovery(container, dayKey){
@@ -1892,8 +1923,8 @@ function removeSet(d,e,c){
   if (c <= 1) return;
   // Clear data for the set being removed
   const idx = c - 1;
-  ['w','r'].forEach(t => localStorage.removeItem(`alberto_w${currentWeek}_${d}_${e}_s${idx}_${t}`));
-  localStorage.removeItem(`alberto_w${currentWeek}_${d}_${e}_s${idx}_fat`);
+  ['w','r'].forEach(t => localStorage.removeItem(storageKey(currentWeek,d,e,idx,t)));
+  localStorage.removeItem(getSetFatigueKey(currentWeek,d,e,idx));
   setSetCount(currentWeek,d,e,c-1);
   render();
 }
