@@ -1196,16 +1196,27 @@ function cycleSetFatigue(d,e,s){
   const next = cur === '' ? '💀' : cur === '💀' ? '☠️' : '';
   if (next === '') localStorage.removeItem(getSetFatigueKey(currentWeek,d,e,s));
   else localStorage.setItem(getSetFatigueKey(currentWeek,d,e,s), next);
-  render();
+  // Update just this button — a full render() here would wipe and rebuild
+  // every input on the page, causing a visible blank flash on iOS.
+  const btn = event && event.currentTarget;
+  if (btn){
+    btn.textContent = next || '+';
+    btn.classList.toggle('has', !!next);
+  } else {
+    render();
+  }
 }
 
 function getDpKey(w,e){ return `alberto_${PID()}_w${w}_dp_${e}`; }
 function getDp(e){ return localStorage.getItem(getDpKey(currentWeek,e)) === '1'; }
 function toggleDp(e){
   const key = getDpKey(currentWeek,e);
-  if (localStorage.getItem(key) === '1') localStorage.removeItem(key);
-  else localStorage.setItem(key,'1');
-  render();
+  const willBeOn = localStorage.getItem(key) !== '1';
+  if (willBeOn) localStorage.setItem(key,'1');
+  else localStorage.removeItem(key);
+  const btn = event && event.currentTarget;
+  if (btn) btn.classList.toggle('active', willBeOn);
+  else render();
 }
 
 function getExUnitKey(d,e){ return `alberto_${PID()}_${d}_${e}_unit`; }
